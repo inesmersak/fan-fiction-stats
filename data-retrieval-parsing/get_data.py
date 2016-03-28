@@ -24,6 +24,8 @@ def get_pages(start, end, address):
 def get_all_pages(pages_per_thread=10, start_number=1):
     """
     Gets all of the pages with results using threading.
+    :param pages_per_thread: The number of pages one thread will download.
+    :param start_number: First page to get.
     """
     directory = './pages'
     if not os.path.exists(directory):  # makes subdirectory pages, if it doesn't exist
