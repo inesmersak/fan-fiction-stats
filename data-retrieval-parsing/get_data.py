@@ -10,7 +10,6 @@ def get_pages(start, end, address):
     :param start: First page to get.
     :param end: Last page to get.
     :param address: The address from which to get the content.
-    :return: None
     """
     for page in range(start, end+1):
         parameters = {
@@ -21,13 +20,10 @@ def get_pages(start, end, address):
         with open('pages/{0}.html'.format(page), 'w', encoding='utf8') as output:
             output.write(r2.text)
 
-    return
 
-
-def get_all_pages():
+def get_all_pages(pages_per_thread=10, start_number=1):
     """
     Gets all of the pages with results using threading.
-    :return:
     """
     directory = './pages'
     if not os.path.exists(directory):  # makes subdirectory pages, if it doesn't exist
@@ -38,11 +34,15 @@ def get_all_pages():
     r = requests.get(address)
     pages_pattern = re.compile(r'<li><a href=".*?">(\d*?)</a></li> <li class="next" title="next">')
     number_of_pages = int(pages_pattern.search(r.text).group(1))
-    start_number = 4300
-    step = 10
 
-    for i in range(start_number, number_of_pages+1, step):
-        th = threading.Thread(target=get_pages, args=(i, min(i+step, number_of_pages), address))
-        th.start()
+    th = []
+    for i in range(start_number, number_of_pages+1, pages_per_thread):
+        th.append(threading.Thread(target=get_pages, args=(i, min(i+pages_per_thread, number_of_pages), address)))
 
-get_all_pages()
+    for thread in th:
+        thread.start()
+    for thread in th:
+        thread.join()
+
+if __name__ == "__main__":
+    get_all_pages()
