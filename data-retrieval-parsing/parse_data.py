@@ -4,7 +4,6 @@ import re
 import os
 import math
 import threading
-import lxml
 
 
 def prepare_date(date_string):
