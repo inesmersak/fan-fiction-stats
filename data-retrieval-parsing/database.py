@@ -20,13 +20,12 @@ class Database:
             return True
 
     def disconnect(self):
-        # self.cur.close()
         self.conn.close()
 
-    def create(self):
+    def create_tables(self):
         pass
 
-    def insert_story(self):
+    def insert_story(self, story):
         pass
 
     def test(self):
