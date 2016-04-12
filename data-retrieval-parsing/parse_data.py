@@ -31,7 +31,7 @@ def prepare_date(date_string):
     return date_obj
 
 
-def get_story_data(story_html, debug=False):
+def parse_story_data(story_html, debug=False):
     """
     Returns a dictionary with the story's properties (such as title, author, summary, characters,...).
     :param story_html: HTML code of the story.
@@ -103,7 +103,7 @@ def get_story_data(story_html, debug=False):
     return story_data
 
 
-def get_stories_from_page(page_markup, debug=False):
+def parse_stories_from_page(page_markup, debug=False):
     """
     Returns all of the stories on the page as an array of dictionaries.
     :param page_markup: HTML code of the page with stories.
@@ -115,7 +115,7 @@ def get_stories_from_page(page_markup, debug=False):
 
     page_data = []  # contains data for every story on the page
     for story in stories:
-        page_data.append(get_story_data(story))
+        page_data.append(parse_story_data(story))
 
     if debug:
         # prints the number of stories on the page and all the stories data
@@ -126,7 +126,7 @@ def get_stories_from_page(page_markup, debug=False):
     return page_data
 
 
-def get_stories_in_range(directory, start, end, thread, result):
+def parse_stories_in_range(directory, start, end, thread, result):
     """
     Parses the stories from pages {start}-{end} and returns an array of dictionaries, one dict for each story,
     for all the stories these pages contain.
@@ -141,11 +141,11 @@ def get_stories_in_range(directory, start, end, thread, result):
         # we assume file name 'n.html' for n-th page
         filename = os.path.join(directory, '{0}.html'.format(i))
         file_markup = open(filename, encoding='utf8')
-        stories_range += get_stories_from_page(file_markup)
+        stories_range += parse_stories_from_page(file_markup)
     result[thread] = stories_range
 
 
-def get_all_stories(directory, files_per_thread=10, start_number=1, debug=False):
+def parse_all_stories(directory, files_per_thread=10, start_number=1, debug=False):
     """
     Returns all of the stories using threading.
     :param directory: The directory containing the pages to parse.
@@ -162,7 +162,7 @@ def get_all_stories(directory, files_per_thread=10, start_number=1, debug=False)
         thread_id = int(math.ceil((i - start_number) / files_per_thread))
         th.append(
             threading.Thread(
-                target=get_stories_in_range,
+                target=parse_stories_in_range,
                 args=(directory, i, min(i+files_per_thread, number_of_files), thread_id, all_stories)
                 )
         )
@@ -179,5 +179,10 @@ def get_all_stories(directory, files_per_thread=10, start_number=1, debug=False)
 
     return all_stories
 
+
+def parse_user_data(user_profile_html):
+    # TODO implement
+    pass
+
 if __name__ == '__main__':
-    get_all_stories('./pages', debug=True)
+    parse_all_stories('./pages', debug=True)

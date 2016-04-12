@@ -8,14 +8,31 @@ class Database:
         self.user = user
         self.password = password
         self.conn = None  # connection
-        self.cur = None  # cursor
 
     def connect(self):
         conn_string = "host='{0}' dbname='{1}' user='{2}' password='{3}'".format(self.host, self.db_name,
-                                                                                self.user, self.password)
-        self.conn = psycopg2.connect(conn_string)
-        self.cur = self.conn.cursor()
+                                                                                 self.user, self.password)
+        try:
+            self.conn = psycopg2.connect(conn_string)
+        except psycopg2.Error:
+            print("Could not connect to database.")
+        else:
+            return True
 
     def disconnect(self):
-        self.cur.close()
+        # self.cur.close()
         self.conn.close()
+
+    def create(self):
+        pass
+
+    def insert_story(self):
+        pass
+
+    def test(self):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM Cars")
+        rows = cursor.fetchall()
+        for row in rows:
+            print(row)
+        cursor.close()
