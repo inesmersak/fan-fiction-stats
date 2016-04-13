@@ -1,6 +1,4 @@
-import re
 import threading
-import requests
 from database import Database
 from config_database import *
 import get_data

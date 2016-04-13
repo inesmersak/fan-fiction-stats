@@ -2,8 +2,6 @@ from bs4 import BeautifulSoup
 import datetime
 import re
 import os
-import math
-import threading
 
 
 def prepare_date(date_string):
@@ -42,7 +40,7 @@ def parse_story_data(story_html, debug=False):
         """
         This function is passed to BeautifulSoup parser in order to find title of the story.
         :param tag:
-        :return:
+        :return: boolean
         """
         # The title has href attribute, but no rel attribute.
         return tag.has_attr('href') and not tag.has_attr('rel')
@@ -126,63 +124,6 @@ def parse_stories_from_page(page_markup, debug=False):
     return page_data
 
 
-def parse_stories_in_range(directory, start, end, thread, result):
-    """
-    Parses the stories from pages {start}-{end} and returns an array of dictionaries, one dict for each story,
-    for all the stories these pages contain.
-    :param directory: The directory containing the pages to parse.
-    :param start: First page to parse.
-    :param end: Last page to parse.
-    :param thread: Thread number.
-    :param result: Array, containing results from n-th thread at result[n].
-    """
-    stories_range = []
-    for i in range(start, end+1):
-        # we assume file name 'n.html' for n-th page
-        filename = os.path.join(directory, '{0}.html'.format(i))
-        file_markup = open(filename, encoding='utf8')
-        stories_range += parse_stories_from_page(file_markup)
-    result[thread] = stories_range
-
-
-def parse_all_stories(directory, files_per_thread=10, start_number=1, debug=False):
-    """
-    Returns all of the stories using threading.
-    :param directory: The directory containing the pages to parse.
-    :param files_per_thread: The number of files one thread will parse.
-    :param start_number: First file to parse.
-    :param debug:
-    :return: all_stories
-    """
-    number_of_files = len([name for name in os.listdir(directory) if os.path.isfile(os.path.join(directory, name))])
-    all_stories = [[] for _ in range(int(math.ceil(number_of_files/files_per_thread)))]
-
-    th = []
-    for i in range(start_number, number_of_files+1, files_per_thread):
-        thread_id = int(math.ceil((i - start_number) / files_per_thread))
-        th.append(
-            threading.Thread(
-                target=parse_stories_in_range,
-                args=(directory, i, min(i+files_per_thread, number_of_files), thread_id, all_stories)
-                )
-        )
-
-    for thread in th:
-        thread.start()
-    for thread in th:
-        thread.join()
-
-    if debug:
-        with open('result', 'w', encoding='utf8') as output:
-            for story_range in all_stories:
-                print(story_range, file=output)
-
-    return all_stories
-
-
 def parse_user_data(user_profile_html):
     # TODO implement
     pass
-
-if __name__ == '__main__':
-    parse_all_stories('./pages', debug=True)
