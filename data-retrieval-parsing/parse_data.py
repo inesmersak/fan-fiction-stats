@@ -62,6 +62,7 @@ def parse_story_data(story_html, debug=False):
     required_tags = story_html.find('ul', class_='required-tags')
     story_data['warnings'] = [warning.text for warning in required_tags.find_all('span', class_='warnings')]
     story_data['category'] = required_tags.find('span', class_='category').text
+    story_data['rating'] = required_tags.find('span', class_='rating').text
 
     date = story_html.find('p', class_='datetime').text
     story_data['date'] = prepare_date(date)
@@ -126,5 +127,12 @@ def parse_stories_from_page(page_markup, debug=False):
 
 
 def parse_user_data(user_profile_html):
-    # TODO implement
-    pass
+    profile = BeautifulSoup(user_profile_html, 'html.parser')
+    user_data = dict()
+
+    meta = profile.find('dl', class_='meta')
+    # TODO birthday date and date joined from str to datetime.date
+    user_data['date_joined'] = meta.find('dt', text='I joined on:').next_sibling.next_sibling.text
+    user_data['birthday'] = meta.find('dd', class_='birthday').text
+    user_data['location'] = meta.find('dt', class_='location').next_sibling.next_sibling.text
+    return user_data
