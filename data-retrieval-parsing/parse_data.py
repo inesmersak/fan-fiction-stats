@@ -60,7 +60,8 @@ def parse_story_data(story_html, debug=False):
     story_data['fandoms'] = [fandom.text for fandom in fandoms.find_all('a')]
 
     required_tags = story_html.find('ul', class_='required-tags')
-    story_data['required_tags'] = [tag.text for tag in required_tags.find_all('li')]
+    story_data['warnings'] = [warning.text for warning in required_tags.find_all('span', class_='warnings')]
+    story_data['category'] = required_tags.find('span', class_='category').text
 
     date = story_html.find('p', class_='datetime').text
     story_data['date'] = prepare_date(date)
