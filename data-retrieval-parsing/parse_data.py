@@ -2,9 +2,6 @@ from bs4 import BeautifulSoup
 import datetime
 import re
 import os
-import math
-import threading
-import lxml
 
 
 def prepare_date(date_string):
@@ -32,7 +29,7 @@ def prepare_date(date_string):
     return date_obj
 
 
-def get_story_data(story_html, debug=False):
+def parse_story_data(story_html, debug=False):
     """
     Returns a dictionary with the story's properties (such as title, author, summary, characters,...).
     :param story_html: HTML code of the story.
@@ -43,7 +40,7 @@ def get_story_data(story_html, debug=False):
         """
         This function is passed to BeautifulSoup parser in order to find title of the story.
         :param tag:
-        :return:
+        :return: boolean
         """
         # The title has href attribute, but no rel attribute.
         return tag.has_attr('href') and not tag.has_attr('rel')
@@ -63,7 +60,9 @@ def get_story_data(story_html, debug=False):
     story_data['fandoms'] = [fandom.text for fandom in fandoms.find_all('a')]
 
     required_tags = story_html.find('ul', class_='required-tags')
-    story_data['required_tags'] = [tag.text for tag in required_tags.find_all('li')]
+    story_data['warnings'] = [warning.text for warning in required_tags.find_all('span', class_='warnings')]
+    story_data['category'] = required_tags.find('span', class_='category').text
+    story_data['rating'] = required_tags.find('span', class_='rating').text
 
     date = story_html.find('p', class_='datetime').text
     story_data['date'] = prepare_date(date)
@@ -104,7 +103,7 @@ def get_story_data(story_html, debug=False):
     return story_data
 
 
-def get_stories_from_page(page_markup, debug=False):
+def parse_stories_from_page(page_markup, debug=False):
     """
     Returns all of the stories on the page as an array of dictionaries.
     :param page_markup: HTML code of the page with stories.
@@ -116,7 +115,7 @@ def get_stories_from_page(page_markup, debug=False):
 
     page_data = []  # contains data for every story on the page
     for story in stories:
-        page_data.append(get_story_data(story))
+        page_data.append(parse_story_data(story))
 
     if debug:
         # prints the number of stories on the page and all the stories data
@@ -127,58 +126,13 @@ def get_stories_from_page(page_markup, debug=False):
     return page_data
 
 
-def get_stories_in_range(directory, start, end, thread, result):
-    """
-    Parses the stories from pages {start}-{end} and returns an array of dictionaries, one dict for each story,
-    for all the stories these pages contain.
-    :param directory: The directory containing the pages to parse.
-    :param start: First page to parse.
-    :param end: Last page to parse.
-    :param thread: Thread number.
-    :param result: Array, containing results from n-th thread at result[n].
-    """
-    stories_range = []
-    for i in range(start, end+1):
-        # we assume file name 'n.html' for n-th page
-        filename = os.path.join(directory, '{0}.html'.format(i))
-        file_markup = open(filename, encoding='utf8')
-        stories_range += get_stories_from_page(file_markup)
-    result[thread] = stories_range
+def parse_user_data(user_profile_html):
+    profile = BeautifulSoup(user_profile_html, 'html.parser')
+    user_data = dict()
 
-
-def get_all_stories(directory, files_per_thread=10, start_number=1, debug=False):
-    """
-    Returns all of the stories using threading.
-    :param directory: The directory containing the pages to parse.
-    :param files_per_thread: The number of files one thread will parse.
-    :param start_number: First file to parse.
-    :param debug:
-    :return: all_stories
-    """
-    number_of_files = len([name for name in os.listdir(directory) if os.path.isfile(os.path.join(directory, name))])
-    all_stories = [[] for _ in range(int(math.ceil(number_of_files/files_per_thread)))]
-
-    th = []
-    for i in range(start_number, number_of_files+1, files_per_thread):
-        thread_id = int(math.ceil((i - start_number) / files_per_thread))
-        th.append(
-            threading.Thread(
-                target=get_stories_in_range,
-                args=(directory, i, min(i+files_per_thread, number_of_files), thread_id, all_stories)
-                )
-        )
-
-    for thread in th:
-        thread.start()
-    for thread in th:
-        thread.join()
-
-    if debug:
-        with open('result', 'w', encoding='utf8') as output:
-            for story_range in all_stories:
-                print(story_range, file=output)
-
-    return all_stories
-
-if __name__ == '__main__':
-    get_all_stories('./pages', debug=True)
+    meta = profile.find('dl', class_='meta')
+    # TODO birthday date and date joined from str to datetime.date
+    user_data['date_joined'] = meta.find('dt', text='I joined on:').next_sibling.next_sibling.text
+    user_data['birthday'] = meta.find('dd', class_='birthday').text
+    user_data['location'] = meta.find('dt', class_='location').next_sibling.next_sibling.text
+    return user_data
