@@ -7,7 +7,7 @@ Python 3.4 and library [`requests`](http://docs.python-requests.org/en/master/) 
 
 ## Entity-relationship diagram of the database ##
 
-Insert picture here...
+![ER diagram](https://bytebucket.org/Emayla/fan-fiction-stats/raw/bd07d5692c3da9c260ec45a90b78cda9bb13d571/ERdiagram.png "ER diagram")
 
 ### Authors ###
 Matic Oskar Hajšen, Ines Meršak
