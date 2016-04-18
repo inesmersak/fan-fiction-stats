@@ -23,9 +23,11 @@ class Database:
         self.conn.close()
 
     def create_tables(self):
+        # TODO
         pass
 
     def insert_story(self, story):
+        # TODO
         pass
 
     def test(self):

@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 import datetime
 import re
-import os
 
 
 def prepare_date(date_string):
@@ -48,11 +47,13 @@ def parse_story_data(story_html, debug=False):
     story_data = dict()
 
     heading = story_html.find('h4', class_='heading')
-    story_data['title'] = heading.find(find_title).text
+    title = heading.find(find_title)
+    story_data['title'] = title.text
+    story_id = title['href'].split('/')
+    story_data['id'] = story_id[-1]
     author = heading.find(rel=True)
     if author:
         story_data['author'] = author.text
-        story_data['author_profile'] = author.get('href')
     else:
         story_data['author'] = 'Anonymous'
 
@@ -61,7 +62,7 @@ def parse_story_data(story_html, debug=False):
 
     required_tags = story_html.find('ul', class_='required-tags')
     story_data['warnings'] = [warning.text for warning in required_tags.find_all('span', class_='warnings')]
-    story_data['category'] = required_tags.find('span', class_='category').text
+    story_data['categories'] = required_tags.find('span', class_='category').text.split(', ')
     story_data['rating'] = required_tags.find('span', class_='rating').text
 
     date = story_html.find('p', class_='datetime').text
@@ -97,6 +98,13 @@ def parse_story_data(story_html, debug=False):
             else:
                 story_data[class_name] = dd_text
 
+    current_chapters, all_chapters = story_data['chapters'].split('/')
+    if current_chapters == all_chapters:
+        story_data['completed'] = True
+    else:
+        story_data['completed'] = False
+    story_data['chapters'] = int(current_chapters)
+
     if debug:
         print(story_data)
 
@@ -131,8 +139,17 @@ def parse_user_data(user_profile_html):
     user_data = dict()
 
     meta = profile.find('dl', class_='meta')
-    # TODO birthday date and date joined from str to datetime.date
-    user_data['date_joined'] = meta.find('dt', text='I joined on:').next_sibling.next_sibling.text
-    user_data['birthday'] = meta.find('dd', class_='birthday').text
-    user_data['location'] = meta.find('dt', class_='location').next_sibling.next_sibling.text
+    date_joined = meta.find('dt', text='I joined on:').next_sibling.next_sibling.text.split('-')
+    date_joined = [int(d) for d in date_joined]
+    user_data['date_joined'] = datetime.date(*date_joined)
+    try:
+        birthday = meta.find('dd', class_='birthday').text.split('-')
+        birthday = [int(d) for d in birthday]
+        user_data['birthday'] = datetime.date(*birthday)
+    except AttributeError:
+        pass
+    try:
+        user_data['location'] = meta.find('dt', class_='location').next_sibling.next_sibling.text
+    except AttributeError:
+        pass
     return user_data
