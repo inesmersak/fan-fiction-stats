@@ -7,7 +7,7 @@ Python 3.4 and library [`requests`](http://docs.python-requests.org/en/master/) 
 
 ## Entity-relationship diagram of the database ##
 
-![ER diagram](https://bytebucket.org/Emayla/fan-fiction-stats/raw/2dacfe0edfd5560d7e003ee7d41495760974fee9/er-diagram/ERdiagram.png "ER diagram")
+![ER diagram](https://bytebucket.org/Emayla/fan-fiction-stats/raw/cfd7418b3df45a89a28b99b4ce6b3221204fbbf1/er-diagram/ERdiagram.png "ER diagram")
 
 The diagram was created with [Dia](http://dia-installer.de/).
 
