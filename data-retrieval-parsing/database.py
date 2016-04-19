@@ -23,7 +23,7 @@ class Database:
         self.conn.close()
 
     def create_tables(self):
-        #TODO
+        # IN PROGRESS
 
         author = "author (author_id INTEGER PRIMARY KEY, location TEXT, birthday DATE, date_joined DATE NOT NULL)"
         fandom = "fandom (fandom_id INTEGER PRIMARY KEY, name TEXT NOT NULL)"
@@ -31,15 +31,14 @@ class Database:
         category = "category (category_id INTEGER PRIMARY KEY, name TEXT)"
         character = "character (character_id INTEGER PRIMARY KEY, name TEXT)"
         story = "story (story_id INTEGER PRIMARY KEY, completed BOOLEAN NOT NULL, word INTEGER NOT NULL, summary TEXT NOT NULL, rating TEXT NOT NULL, hits INTEGER NOT NULL, kudos INTEGER NOT NULL, title TEXT NOT NULL, language TEXT NOT NULL, chapters INTEGER NOT NULL, comments INTEGER NOT NULL)" 
-
-        entities = [author, fandom, category, character, story]
+        entities = [author, fandom, category, character, story]     
         
-        cur = self.conn.cursor()
+        cursor = self.conn.cursor()
         for entity in entities:
             ukaz = "CREATE TABLE IF NOT EXISTS " + entity
-            cur.execute(ukaz)
-        
+            cursor.execute(ukaz)
         self.conn.commit()
+        cursor.close()
 
 
         
