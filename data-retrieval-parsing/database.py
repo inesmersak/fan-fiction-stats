@@ -30,7 +30,7 @@ class Database:
         warning = "warning (warning_id INTEGER PRIMARY KEY, description TEXT NOT NULL)"
         category = "category (category_id INTEGER PRIMARY KEY, name TEXT)"
         character = "character (character_id INTEGER PRIMARY KEY, name TEXT)"
-        story = "story (story_id INTEGER PRIMARY KEY, completed BOOLEAN NOT NULL, word INTEGER NOT NULL, summary TEXT NOT NULL, rating TEXT NOT NULL, hits INTEGER NOT NULL, kudos INTEGER NOT NULL, title TEXT NOT NULL, language TEXT NOT NULL, chapters INTEGER NOT NULL, comments INTEGER NOT NULL)" 
+        story = "story (story_id INTEGER PRIMARY KEY, completed BOOLEAN NOT NULL, word INTEGER NOT NULL, summary TEXT NOT NULL, rating TEXT NOT NULL, hits INTEGER NOT NULL, kudos INTEGER NOT NULL, title TEXT NOT NULL, language TEXT NOT NULL, chapters INTEGER NOT NULL, comments INTEGER NOT NULL, date_published DATE NOT NULL)" 
         entities = [author, fandom, category, character, story]     
         
         cursor = self.conn.cursor()
