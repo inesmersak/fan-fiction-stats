@@ -50,7 +50,7 @@ def parse_story_data(story_html, debug=False):
     title = heading.find(find_title)
     story_data['title'] = title.text
     story_id = title['href'].split('/')
-    story_data['id'] = story_id[-1]
+    story_data['story_id'] = story_id[-1]
     author = heading.find(rel=True)
     if author:
         story_data['author'] = author.text
@@ -66,7 +66,7 @@ def parse_story_data(story_html, debug=False):
     story_data['rating'] = required_tags.find('span', class_='rating').text
 
     date = story_html.find('p', class_='datetime').text
-    story_data['date'] = prepare_date(date)
+    story_data['date_published'] = prepare_date(date)
 
     # TAGS
     tags = story_html.find('ul', class_='tags')

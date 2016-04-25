@@ -15,6 +15,8 @@ def fill_database_in_range(start, end, address, db, thread_id):
         page_data = parse_data.parse_stories_from_page(page)
         s = 1
         for story in page_data:
+            author = parse_data.parse_user_data(get_data.get_user_data(story['username']))
+            db.insert_author(author)
             db.insert_story(story)
             with open('data/id' + str(thread_id) + '-p' + str(p) + '-s' + str(s) + '.out', 'w', encoding='utf8') as inp:
                 for k, v in story.items():

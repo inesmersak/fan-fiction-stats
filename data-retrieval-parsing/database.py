@@ -27,7 +27,8 @@ class Database:
 
         author = "author (" \
                  "author_id INTEGER PRIMARY KEY, " \
-                 "location TEXT, birthday DATE, " \
+                 "location TEXT, " \
+                 "birthday DATE, " \
                  "date_joined DATE NOT NULL" \
                  ")"
         fandom = "fandom (" \
@@ -47,7 +48,8 @@ class Database:
                     "name TEXT)"
         story = "story (" \
                 "story_id INTEGER PRIMARY KEY, " \
-                "completed BOOLEAN NOT NULL, word INTEGER NOT NULL, " \
+                "completed BOOLEAN NOT NULL, " \
+                "words INTEGER NOT NULL, " \
                 "summary TEXT NOT NULL, " \
                 "rating TEXT NOT NULL, " \
                 "hits INTEGER NOT NULL, " \
@@ -72,10 +74,10 @@ class Database:
                          "story INTEGER NOT NULL REFERENCES story(story_id), " \
                          "category INTEGER REFERENCES category(category_id) " \
                          ")"
-        contains_characters = "contains_characters(" \
-                              "story INTEGER NOT NULL REFERENCES story(story_id), " \
-                              "character INTEGER REFERENCES character(character_id)" \
-                              ")"
+        contains_character = "contains_character(" \
+                             "story INTEGER NOT NULL REFERENCES story(story_id), " \
+                             "character INTEGER REFERENCES character(character_id)" \
+                             ")"
         relationship = "relationship(" \
                        "person_1 INTEGER NOT NULL REFERENCES character(character_id), " \
                        "person_2 INTEGER NOT NULL REFERENCES character(character_id), " \
@@ -89,9 +91,8 @@ class Database:
                                 ")"
 
         tables = [author, fandom, category, character, story, warning,
-                  contains_fandom, has_warning, is_in_category, contains_characters, relationship,
+                  contains_fandom, has_warning, is_in_category, contains_character, relationship,
                   contains_relationship]
-
 
         cursor = self.conn.cursor()
         for table in tables:
@@ -99,7 +100,6 @@ class Database:
             cursor.execute(query)
         self.conn.commit()
         cursor.close()
-
 
     def insert_story(self, story):
         # TODO
