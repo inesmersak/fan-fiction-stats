@@ -47,7 +47,7 @@ class Database:
                    ")"
         character = "character (" \
                     "character_id SERIAL PRIMARY KEY, " \
-                    "name TEXT NOT NULL" \
+                    "name TEXT NOT NULL UNIQUE" \
                     ")"
         story = "story (" \
                 "story_id INTEGER PRIMARY KEY, " \
@@ -105,8 +105,43 @@ class Database:
         cursor.close()
 
     def insert_story(self, story):
-        # STORY
-        pass
+        cursor = self.conn.cursor()
+
+        cursor.execute("SELECT author_id FROM author WHERE username = %s", [story['author'],])
+        author = cursor.fetchone()
+
+        query = "INSERT INTO story VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        cursor.executemany(query, [
+            (story.get('story_id'),
+             author,
+             story.get('title'),
+             story.get('date_published'),
+             story.get('language'),
+             story.get('summary'),
+             story.get('completed'),
+             story.get('words'),
+             story.get('chapters'),
+             story.get('rating'),
+             story.get('hits'),
+             story.get('kudos', 0),
+             story.get('comments', 0)
+             )
+        ])
+
+        self.conn.commit()
+        cursor.close()
+
+
+    def insert_character(self, character):
+        cursor = self.conn.cursor()
+        query = "INSERT INTO character VALUES (default, %s)"
+        try:
+            cursor.execute(query, character)
+        except:
+            pass
+        self.conn.commit()
+        cursor.close()
+
 
     def insert_author(self, author):
         cursor = self.conn.cursor()
@@ -116,6 +151,7 @@ class Database:
         except:
             pass
         self.conn.commit()
+        cursor.close()
 
 
     def test(self):
