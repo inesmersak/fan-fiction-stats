@@ -39,11 +39,11 @@ class Database:
                  ")"
         warning = "warning (" \
                   "warning_id SERIAL PRIMARY KEY, " \
-                  "description TEXT NOT NULL" \
+                  "description TEXT NOT NULL UNIQUE" \
                   ")"
         category = "category (" \
                    "category_id SERIAL PRIMARY KEY, " \
-                   "name TEXT NOT NULL" \
+                   "name TEXT NOT NULL UNIQUE" \
                    ")"
         character = "character (" \
                     "character_id SERIAL PRIMARY KEY, " \
@@ -90,7 +90,8 @@ class Database:
                                 "story INTEGER NOT NULL REFERENCES story(story_id)," \
                                 "person_1 INTEGER," \
                                 "person_2 INTEGER," \
-                                "FOREIGN KEY (person_1, person_2) REFERENCES relationship(person_1, person_2)" \
+                                "FOREIGN KEY (person_1, person_2) REFERENCES relationship(person_1, person_2), " \
+                                "PRIMARY KEY (story, person_1, person_2)" \
                                 ")"
 
         tables = [author, fandom, category, character, story, warning,
@@ -105,42 +106,86 @@ class Database:
         cursor.close()
 
     def insert_story(self, story):
-        cursor = self.conn.cursor()
 
+        def insert_character(character):
+            try:
+                cursor.execute("INSERT INTO character VALUES (default, %s)", [(character), ])
+            except:
+                pass
+            self.conn.commit()
+
+        def insert_relationship(ship):
+            cursor.execute("SELECT character_id FROM character WHERE name = %s", [ship[0], ])
+            id_0 = cursor.fetchone()[0]
+            cursor.execute("SELECT character_id FROM character WHERE name = %s", [ship[1], ])
+            id_1 = cursor.fetchone()[0]
+            m, M = min(id_0, id_1), max(id_0,id_1)
+            # cursor.executemany("INSERT INTO relationship VALUES (%s, %s)", [((m, M)), ])
+            try:
+                cursor.executemany("INSERT INTO relationship VALUES (%s, %s)", [((m, M)), ])
+            except:
+                pass
+            self.conn.commit()
+
+        def insert_contains_relationship(ship):
+            cursor.execute("SELECT character_id FROM character WHERE name = %s", [ship[0], ])
+            id_0 = cursor.fetchone()[0]
+            cursor.execute("SELECT character_id FROM character WHERE name = %s", [ship[1], ])
+            id_1 = cursor.fetchone()[0]
+            m, M = min(id_0, id_1), max(id_0, id_1)
+            try:
+                cursor.executemany("INSERT INTO contains_relationship VALUES (%s, %s, %s)",[(story.get('story_id'), m, M), ])
+            except:
+                pass
+            # cursor.executemany("INSERT INTO contains_relationship VALUES (%s, %s, %s)", [(story.get('story_id'), m, M), ])
+            self.conn.commit()
+
+
+
+
+
+        # STORY
+        cursor = self.conn.cursor()
         cursor.execute("SELECT author_id FROM author WHERE username = %s", [story['author'],])
         author = cursor.fetchone()
-
         query = "INSERT INTO story VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        cursor.executemany(query, [
-            (story.get('story_id'),
-             author,
-             story.get('title'),
-             story.get('date_published'),
-             story.get('language'),
-             story.get('summary'),
-             story.get('completed'),
-             story.get('words'),
-             story.get('chapters'),
-             story.get('rating'),
-             story.get('hits'),
-             story.get('kudos', 0),
-             story.get('comments', 0)
-             )
-        ])
-
-        self.conn.commit()
-        cursor.close()
-
-
-    def insert_character(self, character):
-        cursor = self.conn.cursor()
-        query = "INSERT INTO character VALUES (default, %s)"
         try:
-            cursor.execute(query, character)
+            cursor.executemany(query, [
+                (story.get('story_id'),
+                 author,
+                 story.get('title'),
+                 story.get('date_published'),
+                 story.get('language'),
+                 story.get('summary'),
+                 story.get('completed'),
+                 story.get('words'),
+                 story.get('chapters'),
+                 story.get('rating'),
+                 story.get('hits'),
+                 story.get('kudos', 0),
+                 story.get('comments', 0)
+                 )
+            ])
         except:
             pass
         self.conn.commit()
+
+
+        # CHARACTERS and RELATIONSHIPS
+        cast = set(story.get('characters'))
+        for person in cast:
+            insert_character(person)
+        relationships = story.get('relationships')
+        for ship in relationships:
+            people = ship.split("/")
+            for person in people:
+               insert_character(person)
+            insert_relationship(people)
+            insert_contains_relationship(people)
+
+        self.conn.commit()
         cursor.close()
+
 
 
     def insert_author(self, author):
