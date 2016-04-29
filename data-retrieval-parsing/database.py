@@ -1,4 +1,5 @@
 import psycopg2
+from config_database import *
 
 
 class Database:
@@ -26,40 +27,42 @@ class Database:
         # IN PROGRESS
 
         author = "author (" \
-                 "author_id INTEGER PRIMARY KEY, " \
+                 "author_id SERIAL PRIMARY KEY, " \
+                 "username TEXT NOT NULL, " \
+                 "date_joined DATE NOT NULL, " \
                  "location TEXT, " \
-                 "birthday DATE, " \
-                 "date_joined DATE NOT NULL" \
+                 "birthday DATE" \
                  ")"
         fandom = "fandom (" \
-                 "fandom_id INTEGER PRIMARY KEY, " \
+                 "fandom_id SERIAL PRIMARY KEY, " \
                  "name TEXT NOT NULL" \
                  ")"
         warning = "warning (" \
-                  "warning_id INTEGER PRIMARY KEY, " \
+                  "warning_id SERIAL PRIMARY KEY, " \
                   "description TEXT NOT NULL" \
                   ")"
         category = "category (" \
-                   "category_id INTEGER PRIMARY KEY, " \
-                   "name TEXT" \
+                   "category_id SERIAL PRIMARY KEY, " \
+                   "name TEXT NOT NULL" \
                    ")"
         character = "character (" \
-                    "character_id INTEGER PRIMARY KEY, " \
-                    "name TEXT)"
+                    "character_id SERIAL PRIMARY KEY, " \
+                    "name TEXT NOT NULL" \
+                    ")"
         story = "story (" \
                 "story_id INTEGER PRIMARY KEY, " \
+                "written_by INTEGER NOT NULL REFERENCES author(author_id), " \
+                "title TEXT NOT NULL, " \
+                "date_published DATE NOT NULL, " \
+                "language TEXT NOT NULL, " \
+                "summary TEXT NOT NULL, " \
                 "completed BOOLEAN NOT NULL, " \
                 "words INTEGER NOT NULL, " \
-                "summary TEXT NOT NULL, " \
+                "chapters INTEGER NOT NULL, " \
                 "rating TEXT NOT NULL, " \
                 "hits INTEGER NOT NULL, " \
                 "kudos INTEGER NOT NULL, " \
-                "title TEXT NOT NULL, " \
-                "language TEXT NOT NULL, " \
-                "chapters INTEGER NOT NULL, " \
-                "comments INTEGER NOT NULL, " \
-                "date_published DATE NOT NULL, " \
-                "written_by INTEGER NOT NULL REFERENCES author(author_id)" \
+                "comments INTEGER NOT NULL " \
                 ")"
 
         contains_fandom = "contains_fandom(" \
@@ -72,11 +75,11 @@ class Database:
                       ")"
         is_in_category = "is_in_category( " \
                          "story INTEGER NOT NULL REFERENCES story(story_id), " \
-                         "category INTEGER REFERENCES category(category_id) " \
+                         "category INTEGER NOT NULL REFERENCES category(category_id) " \
                          ")"
         contains_character = "contains_character(" \
                              "story INTEGER NOT NULL REFERENCES story(story_id), " \
-                             "character INTEGER REFERENCES character(character_id)" \
+                             "character INTEGER NOT NULL REFERENCES character(character_id)" \
                              ")"
         relationship = "relationship(" \
                        "person_1 INTEGER NOT NULL REFERENCES character(character_id), " \
@@ -102,7 +105,7 @@ class Database:
         cursor.close()
 
     def insert_story(self, story):
-        # TODO
+        # STORY
         pass
 
     def test(self):
@@ -112,3 +115,7 @@ class Database:
         for row in rows:
             print(row)
         cursor.close()
+
+db = Database(host, db_name, user, password)
+db.connect()
+db.create_tables()
