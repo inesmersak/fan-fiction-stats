@@ -1,4 +1,5 @@
 import psycopg2
+import psycopg2.extensions
 from config_database import *
 
 
@@ -24,11 +25,10 @@ class Database:
         self.conn.close()
 
     def create_tables(self):
-        # IN PROGRESS
 
         author = "author (" \
                  "author_id SERIAL PRIMARY KEY, " \
-                 "username TEXT NOT NULL, " \
+                 "username TEXT NOT NULL UNIQUE, " \
                  "date_joined DATE NOT NULL, " \
                  "location TEXT, " \
                  "birthday DATE" \
@@ -108,6 +108,16 @@ class Database:
         # STORY
         pass
 
+    def insert_author(self, author):
+        cursor = self.conn.cursor()
+        query = "INSERT INTO author VALUES (default, %s, %s, %s, %s)"
+        try:
+            cursor.executemany(query, [(author.get('username'), author.get('date_joined'), author.get('location'), author.get('birthday')),])
+        except:
+            pass
+        self.conn.commit()
+
+
     def test(self):
         cursor = self.conn.cursor()
         cursor.execute("SELECT * FROM Cars")
@@ -115,7 +125,3 @@ class Database:
         for row in rows:
             print(row)
         cursor.close()
-
-db = Database(host, db_name, user, password)
-db.connect()
-db.create_tables()

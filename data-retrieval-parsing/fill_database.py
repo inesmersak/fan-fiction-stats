@@ -15,8 +15,9 @@ def fill_database_in_range(start, end, address, db, thread_id):
         page_data = parse_data.parse_stories_from_page(page)
         s = 1
         for story in page_data:
-            author = parse_data.parse_user_data(get_data.get_user_data(story['username']))
-            db.insert_author(author)
+            author = parse_data.parse_user_data(get_data.get_user_data(story['author'])) # Error with using 'username' -MOH
+            author['username'] = story['author'] # Quick fix -MOH
+            db.insert_author(author) # Don't know where username is in user_date -MOH
             db.insert_story(story)
             with open('data/id' + str(thread_id) + '-p' + str(p) + '-s' + str(s) + '.out', 'w', encoding='utf8') as inp:
                 for k, v in story.items():
@@ -33,7 +34,7 @@ def create_and_fill_database():
         address = 'http://archiveofourown.org/tags/Harry%20Potter%20-%20J*d*%20K*d*%20Rowling/works?'
 
         number_of_pages = get_data.get_number_of_pages(address)
-        start_number = number_of_pages
+        start_number = number_of_pages - 1
         number_of_threads = 200
         pages_per_thread = int(math.ceil(number_of_pages/number_of_threads))
 
