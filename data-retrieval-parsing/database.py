@@ -35,7 +35,7 @@ class Database:
                  ")"
         fandom = "fandom (" \
                  "fandom_id SERIAL PRIMARY KEY, " \
-                 "name TEXT NOT NULL" \
+                 "name TEXT NOT NULL UNIQUE" \
                  ")"
         warning = "warning (" \
                   "warning_id SERIAL PRIMARY KEY, " \
@@ -67,19 +67,23 @@ class Database:
 
         contains_fandom = "contains_fandom(" \
                           "story INTEGER NOT NULL REFERENCES story(story_id), " \
-                          "fandom INTEGER NOT NULL REFERENCES fandom(fandom_id) " \
+                          "fandom INTEGER NOT NULL REFERENCES fandom(fandom_id)," \
+                          "PRIMARY KEY (story, fandom) " \
                           ")"
         has_warning = "has_warning(" \
                       "story INTEGER NOT NULL REFERENCES story(story_id), " \
-                      "warning INTEGER NOT NULL REFERENCES warning(warning_id) " \
+                      "warning INTEGER NOT NULL REFERENCES warning(warning_id)," \
+                      "PRIMARY KEY (story, warning) " \
                       ")"
         is_in_category = "is_in_category( " \
                          "story INTEGER NOT NULL REFERENCES story(story_id), " \
-                         "category INTEGER NOT NULL REFERENCES category(category_id) " \
+                         "category INTEGER NOT NULL REFERENCES category(category_id), " \
+                         "PRIMARY KEY (story, category) " \
                          ")"
         contains_character = "contains_character(" \
                              "story INTEGER NOT NULL REFERENCES story(story_id), " \
-                             "character INTEGER NOT NULL REFERENCES character(character_id)" \
+                             "character INTEGER NOT NULL REFERENCES character(character_id), " \
+                             "PRIMARY KEY (story, character)" \
                              ")"
         relationship = "relationship(" \
                        "person_1 INTEGER NOT NULL REFERENCES character(character_id), " \
@@ -113,7 +117,16 @@ class Database:
         def insert_character(character):
             try:
                 cursor.execute("INSERT INTO character VALUES (default, %s)", [(character), ])
-            except:
+            except psycopg2.IntegrityError:
+                pass
+            self.conn.commit()
+
+        def insert_contains_character(character):
+            cursor.execute("SELECT character_id FROM character WHERE name = %s", [character, ])
+            id = cursor.fetchone()[0]
+            try:
+                cursor.executemany("INSERT INTO contains_character VALUES (%s, %s)", [(story.get('story_id'), id), ])
+            except psycopg2.IntegrityError:
                 pass
             self.conn.commit()
 
@@ -123,10 +136,9 @@ class Database:
             cursor.execute("SELECT character_id FROM character WHERE name = %s", [ship[1], ])
             id_1 = cursor.fetchone()[0]
             m, M = min(id_0, id_1), max(id_0,id_1)
-            # cursor.executemany("INSERT INTO relationship VALUES (%s, %s)", [((m, M)), ])
             try:
                 cursor.executemany("INSERT INTO relationship VALUES (%s, %s)", [((m, M)), ])
-            except:
+            except psycopg2.IntegrityError:
                 pass
             self.conn.commit()
 
@@ -138,9 +150,8 @@ class Database:
             m, M = min(id_0, id_1), max(id_0, id_1)
             try:
                 cursor.executemany("INSERT INTO contains_relationship VALUES (%s, %s, %s)",[(story.get('story_id'), m, M), ])
-            except:
+            except psycopg2.IntegrityError:
                 pass
-            # cursor.executemany("INSERT INTO contains_relationship VALUES (%s, %s, %s)", [(story.get('story_id'), m, M), ])
             self.conn.commit()
 
         def insert_is_in_category(category):
@@ -148,16 +159,32 @@ class Database:
             id = cursor.fetchone()[0]
             try:
                 cursor.executemany("INSERT INTO is_in_category VALUES (%s, %s)", [(story.get('story_id'), id),])
-            except:
+            except psycopg2.IntegrityError:
                 pass
             self.conn.commit()
 
-        def instert_has_warning(warning):
+        def insert_has_warning(warning):
             cursor.execute("SELECT warning_id FROM warning WHERE description = %s", [warning, ])
             id = cursor.fetchone()[0]
             try:
                 cursor.executemany("INSERT INTO has_warning VALUES (%s, %s)", [(story.get('story_id'), id), ])
-            except:
+            except psycopg2.IntegrityError:
+                pass
+            self.conn.commit()
+
+        def insert_fandom(fandom):
+            try:
+                cursor.execute("INSERT INTO fandom VALUES (default, %s)", [(fandom), ])
+            except psycopg2.IntegrityError:
+                pass
+            self.conn.commit()
+
+        def insert_contains_fandom(fandom):
+            cursor.execute("SELECT fandom_id FROM fandom WHERE name = %s", [(fandom), ])
+            id = cursor.fetchone()[0]
+            try:
+                cursor.executemany("INSERT INTO contains_fandom VALUES (%s, %s)", [(story.get('story_id'), id), ])
+            except psycopg2.IntegrityError:
                 pass
             self.conn.commit()
 
@@ -183,7 +210,7 @@ class Database:
                  story.get('comments', 0)
                  )
             ])
-        except:
+        except psycopg2.IntegrityError:
             pass
         self.conn.commit()
 
@@ -191,6 +218,7 @@ class Database:
         cast = set(story.get('characters'))
         for person in cast:
             insert_character(person)
+            insert_contains_character(person)
         relationships = story.get('relationships')
         for ship in relationships:
             people = ship.split("/")
@@ -208,9 +236,17 @@ class Database:
         # WARNINGS
         warnings = story.get('warnings')
         for warning in warnings:
-            instert_has_warning(warning)
+            insert_has_warning(warning)
+
+        # FANDOMS
+        fandoms = story.get('fandoms')
+        for fandom in fandoms:
+            insert_fandom(fandom)
+            insert_contains_fandom(fandom)
+
 
         cursor.close()
+
 
 
     def insert_author(self, author):
@@ -218,7 +254,7 @@ class Database:
         query = "INSERT INTO author VALUES (default, %s, %s, %s, %s)"
         try:
             cursor.executemany(query, [(author.get('username'), author.get('date_joined'), author.get('location'), author.get('birthday')),])
-        except:
+        except psycopg2.IntegrityError:
             pass
         self.conn.commit()
         cursor.close()
@@ -229,8 +265,8 @@ class Database:
         query = "INSERT INTO category VALUES (default, %s)"
         for x in categories:
             try:
-                cursor.execute(query, [(x),])
-            except:
+                cursor.execute(query, [(x)])
+            except psycopg2.DatabaseError:
                 pass
         self.conn.commit()
         cursor.close()
@@ -247,7 +283,7 @@ class Database:
         for x in warnings:
             try:
                 cursor.execute(query, [(x), ])
-            except:
+            except psycopg2.DatabaseError:
                 pass
         self.conn.commit()
         cursor.close()
