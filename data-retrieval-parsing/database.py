@@ -105,6 +105,9 @@ class Database:
         self.conn.commit()
         cursor.close()
 
+        self.fill_categories()
+        self.fill_warnings()
+
     def insert_story(self, story):
 
         def insert_character(character):
@@ -140,9 +143,23 @@ class Database:
             # cursor.executemany("INSERT INTO contains_relationship VALUES (%s, %s, %s)", [(story.get('story_id'), m, M), ])
             self.conn.commit()
 
+        def insert_is_in_category(category):
+            cursor.execute("SELECT category_id FROM category WHERE name = %s", [category, ])
+            id = cursor.fetchone()[0]
+            try:
+                cursor.executemany("INSERT INTO is_in_category VALUES (%s, %s)", [(story.get('story_id'), id),])
+            except:
+                pass
+            self.conn.commit()
 
-
-
+        def instert_has_warning(warning):
+            cursor.execute("SELECT warning_id FROM warning WHERE description = %s", [warning, ])
+            id = cursor.fetchone()[0]
+            try:
+                cursor.executemany("INSERT INTO has_warning VALUES (%s, %s)", [(story.get('story_id'), id), ])
+            except:
+                pass
+            self.conn.commit()
 
         # STORY
         cursor = self.conn.cursor()
@@ -170,7 +187,6 @@ class Database:
             pass
         self.conn.commit()
 
-
         # CHARACTERS and RELATIONSHIPS
         cast = set(story.get('characters'))
         for person in cast:
@@ -182,10 +198,19 @@ class Database:
                insert_character(person)
             insert_relationship(people)
             insert_contains_relationship(people)
-
         self.conn.commit()
-        cursor.close()
 
+        # CATEGORIES
+        categories = story.get('categories')
+        for category in categories:
+            insert_is_in_category(category)
+
+        # WARNINGS
+        warnings = story.get('warnings')
+        for warning in warnings:
+            instert_has_warning(warning)
+
+        cursor.close()
 
 
     def insert_author(self, author):
@@ -197,6 +222,54 @@ class Database:
             pass
         self.conn.commit()
         cursor.close()
+
+    def fill_categories(self):
+        cursor = self.conn.cursor()
+        categories = ["M/M", "F/M", "Gen", "Multi", "F/F", "Other"]
+        query = "INSERT INTO category VALUES (default, %s)"
+        for x in categories:
+            try:
+                cursor.execute(query, [(x),])
+            except:
+                pass
+        self.conn.commit()
+        cursor.close()
+
+    def fill_warnings(self):
+        cursor = self.conn.cursor()
+        warnings = ["No Archive Warnings Apply",
+                    "Creator Chose Not To Use Archive Warnings",
+                    "Major Character Death",
+                    "Graphic Depictions Of Violence",
+                    "Underage",
+                    "Rape/Non-Con"]
+        query = "INSERT INTO warning VALUES (default, %s)"
+        for x in warnings:
+            try:
+                cursor.execute(query, [(x), ])
+            except:
+                pass
+        self.conn.commit()
+        cursor.close()
+
+    # def fill_ratings(self):
+    #     cursor = self.conn.cursor()
+    #     ratings = ["Teens And Up Audiences",
+    #                "General Audiences",
+    #                "Explicit",
+    #                "Mature",
+    #                "Not Rated"]
+    #     query = "INSERT INTO rating VALUES (default, %s)"
+    #     for x in ratings:
+    #         try:
+    #             cursor.execute(query, [(x), ])
+    #         except:
+    #             pass
+    #     self.conn.commit()
+    #     cursor.close()
+
+
+
 
 
     def test(self):
