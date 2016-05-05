@@ -131,6 +131,8 @@ class Database:
             self.conn.commit()
 
         def insert_relationship(ship):
+            if len(ship) < 2:  # TODO
+                return
             cursor.execute("SELECT character_id FROM character WHERE name = %s", [ship[0], ])
             id_0 = cursor.fetchone()[0]
             cursor.execute("SELECT character_id FROM character WHERE name = %s", [ship[1], ])
@@ -143,24 +145,29 @@ class Database:
             self.conn.commit()
 
         def insert_contains_relationship(ship):
+            if len(ship) < 2:
+                return
             cursor.execute("SELECT character_id FROM character WHERE name = %s", [ship[0], ])
             id_0 = cursor.fetchone()[0]
             cursor.execute("SELECT character_id FROM character WHERE name = %s", [ship[1], ])
             id_1 = cursor.fetchone()[0]
             m, M = min(id_0, id_1), max(id_0, id_1)
             try:
-                cursor.executemany("INSERT INTO contains_relationship VALUES (%s, %s, %s)",[(story.get('story_id'), m, M), ])
+                cursor.executemany("INSERT INTO contains_relationship VALUES (%s, %s, %s)",
+                                   [(story.get('story_id'), m, M), ])
             except psycopg2.IntegrityError:
                 pass
             self.conn.commit()
 
         def insert_is_in_category(category):
             cursor.execute("SELECT category_id FROM category WHERE name = %s", [category, ])
-            id = cursor.fetchone()[0]
-            try:
-                cursor.executemany("INSERT INTO is_in_category VALUES (%s, %s)", [(story.get('story_id'), id),])
-            except psycopg2.IntegrityError:
-                pass
+            category_data = cursor.fetchone()
+            if category_data:
+                id = category_data[0]
+                try:
+                    cursor.executemany("INSERT INTO is_in_category VALUES (%s, %s)", [(story.get('story_id'), id), ])
+                except psycopg2.IntegrityError:
+                    pass
             self.conn.commit()
 
         def insert_has_warning(warning):
@@ -223,7 +230,7 @@ class Database:
         for ship in relationships:
             people = ship.split("/")
             for person in people:
-               insert_character(person)
+                insert_character(person)
             insert_relationship(people)
             insert_contains_relationship(people)
         self.conn.commit()

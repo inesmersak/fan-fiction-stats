@@ -134,14 +134,17 @@ def parse_stories_from_page(page_markup, debug=False):
     return page_data
 
 
-def parse_user_data(user_profile_html):
+def parse_user_data(username, user_profile_html):
     profile = BeautifulSoup(user_profile_html, 'html.parser')
     user_data = dict()
 
     meta = profile.find('dl', class_='meta')
-    date_joined = meta.find('dt', text='I joined on:').next_sibling.next_sibling.text.split('-')
-    date_joined = [int(d) for d in date_joined]
-    user_data['date_joined'] = datetime.date(*date_joined)
+    try:
+        date_joined = meta.find('dt', text='I joined on:').next_sibling.next_sibling.text.split('-')
+        date_joined = [int(d) for d in date_joined]
+        user_data['date_joined'] = datetime.date(*date_joined)
+    except AttributeError:
+        print(username)
     try:
         birthday = meta.find('dd', class_='birthday').text.split('-')
         birthday = [int(d) for d in birthday]
