@@ -53,7 +53,12 @@ def parse_story_data(story_html, debug=False):
     story_data['story_id'] = story_id[-1]
     author = heading.find(rel=True)
     if author:
-        story_data['author'] = author.text
+        author = author.text
+        if '(' in author:
+            author = author.split('(')
+            author = author[len(author)-1]
+            author = author[:len(author)-1]
+        story_data['author'] = author
     else:
         story_data['author'] = 'Anonymous'
 
@@ -137,6 +142,7 @@ def parse_stories_from_page(page_markup, debug=False):
 def parse_user_data(username, user_profile_html):
     profile = BeautifulSoup(user_profile_html, 'html.parser')
     user_data = dict()
+    user_data['username'] = username
 
     meta = profile.find('dl', class_='meta')
     try:
