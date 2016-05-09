@@ -151,14 +151,19 @@ def parse_user_data(username, user_profile_html):
         user_data['date_joined'] = datetime.date(*date_joined)
     except AttributeError:
         print(username)
+
     try:
-        birthday = meta.find('dd', class_='birthday').text.split('-')
-        birthday = [int(d) for d in birthday]
-        user_data['birthday'] = datetime.date(*birthday)
-    except AttributeError:
+        birthday = meta.find('dd', class_='birthday').text
+        if birthday:
+            birthday = birthday.split('-')
+            birthday = [int(d) for d in birthday]
+            user_data['birthday'] = datetime.date(*birthday)
+    except AttributeError:  # birthday div does not exist
         pass
+
     try:
         user_data['location'] = meta.find('dt', class_='location').next_sibling.next_sibling.text
-    except AttributeError:
+    except AttributeError:  # location div does not exist
         pass
+
     return user_data
