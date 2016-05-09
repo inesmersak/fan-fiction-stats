@@ -36,11 +36,17 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
           label = "Number of chapters",
           value = 1,
           min = 1
-        )
+        ),
+        # test #
+        sliderInput("min",
+                    "Minimalni znesek transakcije:",
+                    min = -10000,
+                    max = 10000,
+                    value = 1000)
       ),
 
       mainPanel(
-        "Displayed stories"
+        tableOutput("authors")
       )
 
 
