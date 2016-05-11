@@ -8,8 +8,10 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
   tabPanel("Browse stories",
     sidebarLayout(
       sidebarPanel(width=3,
+        uiOutput("characterSelector"),
+        textOutput("someText"),
         selectInput("rating", label = "Rating",
-          choices = list("Choice 1" = 1, "Choice 2" = 2, "Choice 3" = 3),
+          choices = list(),
           selected = 1),
         selectInput("category", label = "Category",
           choices = list("Choice 1" = 1, "Choice 2" = 2, "Choice 3" = 3),
@@ -17,15 +19,6 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
         checkboxGroupInput(
           "language",
           label = "Language",
-          choices = list("Choice 1" = 1, "Choice 2" = 2, "Choice 3" = 3,
-                         "Choice 4" = 4, "Choice 5" = 5, "Choice 6" = 6,
-                         "Choice 7" = 7, "Choice 8" = 8, "Choice 9" = 9),
-          selected = 1,
-          inline = TRUE
-        ),
-        checkboxGroupInput(
-          "characters",
-          label = "Characters",
           choices = list("Choice 1" = 1, "Choice 2" = 2, "Choice 3" = 3,
                          "Choice 4" = 4, "Choice 5" = 5, "Choice 6" = 6,
                          "Choice 7" = 7, "Choice 8" = 8, "Choice 9" = 9),
@@ -46,7 +39,7 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
       ),
 
       mainPanel(
-        tableOutput("authors")
+        tableOutput("stories")
       )
 
 
