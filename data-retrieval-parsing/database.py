@@ -156,19 +156,18 @@ class Database:
             self.conn.commit()
 
         def insert_contains_relationship(relationship):
-            if len(relationship) < 2:
-                return
-            cursor.execute("SELECT character_id FROM character WHERE name = %s", [relationship[0], ])
-            id_0 = cursor.fetchone()[0]
-            cursor.execute("SELECT character_id FROM character WHERE name = %s", [relationship[1], ])
-            id_1 = cursor.fetchone()[0]
-            m, M = min(id_0, id_1), max(id_0, id_1)
-            try:
-                cursor.executemany("INSERT INTO contains_relationship VALUES (%s, %s, %s)",
-                                   [(story.get('story_id'), m, M), ])
-            except psycopg2.IntegrityError:
-                pass
-            self.conn.commit()
+            if len(relationship) > 1:
+                cursor.execute("SELECT character_id FROM character WHERE name = %s", [relationship[0], ])
+                id_0 = cursor.fetchone()[0]
+                cursor.execute("SELECT character_id FROM character WHERE name = %s", [relationship[1], ])
+                id_1 = cursor.fetchone()[0]
+                m, M = min(id_0, id_1), max(id_0, id_1)
+                try:
+                    cursor.executemany("INSERT INTO contains_relationship VALUES (%s, %s, %s)",
+                                       [(story.get('story_id'), m, M), ])
+                except psycopg2.IntegrityError:
+                    pass
+                self.conn.commit()
 
         def insert_is_in_category(cat):
             cursor.execute("SELECT category_id FROM category WHERE name = %s", [cat, ])
@@ -329,21 +328,23 @@ class Database:
         cursor.close()
 
     def story_exists(self, story):
+        """Checks if the given story already exists in the database."""
         st_id = story.get('story_id')
         cursor = self.conn.cursor()
         cursor.execute("SELECT story_id FROM story WHERE story_id = %s", [st_id, ])
-        if cursor.fetchone()[0]:
+        if cursor.fetchone():
             cursor.close()
             return True
         else:
             cursor.close()
             return False
 
-    def author_exists(self, author):
-        au_id = author.get('author_id')
+    def author_exists(self, story):
+        """Checks if the given story's author already exists in the database."""
+        au_id = story.get('author')
         cursor = self.conn.cursor()
-        cursor.execute("SELECT author_id FROM author WHERE author_id = %s", [au_id, ])
-        if cursor.fetchone()[0]:
+        cursor.execute("SELECT author_id FROM author WHERE username = %s", [au_id, ])
+        if cursor.fetchone():
             cursor.close()
             return True
         else:
