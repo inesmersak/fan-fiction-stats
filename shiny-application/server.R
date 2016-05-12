@@ -1,38 +1,10 @@
 library(shiny)
 library(dplyr)
 library(RPostgreSQL)
+library(plotrix)
 
 source("auth.R")
-
-convert_to_encoding <-
-  function(x, from_encoding = "UTF-8", to_encoding = "cp1250"){
-
-    # names of columns are encoded in specified encoding
-    my_names <-
-      iconv(names(x), from_encoding, to_encoding)
-
-    # if any column name is NA, leave the names
-    # otherwise replace them with new names
-    if(any(is.na(my_names))){
-      names(x)
-    } else {
-      names(x) <- my_names
-    }
-
-    # get column classes
-    x_char_columns <- sapply(x, class)
-    # identify character columns
-    x_cols <- names(x_char_columns[x_char_columns == "character"])
-
-    # convert all string values in character columns to
-    # specified encoding
-    x <-
-      x %>%
-      mutate_each_(funs(iconv(., from_encoding, to_encoding)),
-                   x_cols)
-    # return x
-    return(x)
-  }
+source("auxiliaryFunctions.R")
 
 shinyServer(function(input, output) {
   # connect to database
@@ -45,28 +17,35 @@ shinyServer(function(input, output) {
   tbl.characters <- tbl(conn, "character")
   tbl.contains_character <- tbl(conn, "contains_character")
 
-  output$authors <- renderTable({
-    # filter and order table data
-    t <- tbl.authors %>% filter(author_id > input$min) %>%
-      arrange(username) %>% data.frame()
-    t$date_joined <- as.character(t$date_joined)
-    t$birthday <- as.character(t$birthday)
 
-    # return the table
-    t
-  })
+  # RENDER TABLES
 
-  output$stories <- renderTable({
+  # output$authors <- renderTable({
+  #   # filter and order table data
+  #   t <- tbl.authors %>% filter(author_id > input$min) %>%
+  #     arrange(username) %>% data.frame()
+  #   t$date_joined <- as.character(t$date_joined)
+  #   t$birthday <- as.character(t$birthday)
+  #
+  #   # return the table
+  #   t
+  # })
+
+  output$stories <- renderDataTable({
     t <- tbl.stories %>%
       left_join(
         left_join(tbl.contains_character, tbl.characters, by=c("character"="character_id")),
         by=c("story_id"="story")) %>%
       arrange(desc(hits)) %>%
-      filter(name %in% c(input$characters, NA, NA)) %>%
       filter(hits > input$minViews) %>%
-      filter(chapters == input$chapters) %>%
-      filter(language %in% c(input$language, NA, NA)) %>%
-      group_by(story_id, title, summary, language, hits, chapters) %>%
+      filter(chapters == input$chapters)
+    if (length(input$characters) > 0) {
+      t <- t %>% filter(name %in% c(input$characters, NA))
+    }
+    if (length(input$language) > 0) {
+      t <- t %>% filter(language %in% c(input$language, NA))
+    }
+    t <- t %>% group_by(story_id, title, summary, language, hits, chapters) %>%
       summarise() %>%
       data.frame()
     if (nrow(t) > 0) {
@@ -75,17 +54,10 @@ shinyServer(function(input, output) {
       t <- convert_to_encoding(t)
     }
     t
-  })
+  }, options = list(lengthMenu = c(5, 10, 15, 20), pageLength = 10))
 
-  output$characters <- renderTable({
-    t <- tbl.characters %>% arrange(name) %>% select(name) %>% data.frame()
-    t <- tbl.contains_character %>%
-      left_join(tbl.characters, by=c("character"="character_id")) %>%
-      group_by(name) %>%
-      summarise( appearances = n() ) %>%
-      top_n(20, appearances) %>%
-      data.frame()
-  })
+
+  # RENDER SELECTORS
 
   numberOfCharactersShown = 100
   output$characterSelector <- renderUI({
@@ -95,7 +67,8 @@ shinyServer(function(input, output) {
       summarise( appearances = n() ) %>%
       top_n(numberOfCharactersShown, appearances) %>%
       data.frame()
-    selectInput("characters", "Characters", choices=as.list(characterNames$name), multiple=TRUE)
+    selectInput("characters", "Characters",
+                choices=as.list(characterNames$name), multiple=TRUE)
   })
 
   output$languageSelector <- renderUI({
@@ -103,7 +76,21 @@ shinyServer(function(input, output) {
       select(language) %>%
       data.frame()
     properlyEncodedLanguages <- as.list(unique(convert_to_encoding(languages)))
-    selectInput("language", "Language", choices=properlyEncodedLanguages, multiple=TRUE)
+    selectInput("language", "Language",
+                choices=properlyEncodedLanguages, multiple=TRUE)
+  })
+
+  # RENDER PLOTS
+
+  storyTable <- tbl.stories %>% select(language) %>% data.frame()
+
+  output$languagePlot <- renderPlot({
+    plotData <- storyTable %>% convert_to_encoding() %>% table()
+    lbls <- paste(names(plotData), "\n", plotData, sep="")
+
+    barplot(plotData, names.arg = lbls, xlab = "Language", ylab = "Number of stories", col = "blue",
+            main = "Language in fan fictions")
+
   })
 
 })

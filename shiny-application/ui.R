@@ -1,5 +1,14 @@
 library(shiny)
 
+RATINGS <- c("Teens And Up Audiences",
+            "General Audiences",
+            "Explicit",
+            "Mature",
+            "Not Rated")
+
+CATEGORIES <- c("M/M", "F/M", "Gen", "Multi", "F/F", "Other")
+
+
 shinyUI(navbarPage("Harry Potter Fan Fiction",
   theme="bootstrap-sandstone.css",
   inverse = TRUE,
@@ -12,17 +21,14 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
         uiOutput("languageSelector"),
         textOutput("someText"),
         selectInput("rating", label = "Rating",
-          choices = list(),
-          selected = 1),
+          choices = RATINGS),
         selectInput("category", label = "Category",
-          choices = list("Choice 1" = 1, "Choice 2" = 2, "Choice 3" = 3),
-          selected = 1),
+          choices = CATEGORIES),
         numericInput("chapters",
           label = "Number of chapters",
           value = 1,
           min = 1
         ),
-        # test #
         sliderInput("minViews",
                     "Minimal number of views:",
                     min = 0,
@@ -31,7 +37,7 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
       ),
 
       mainPanel(
-        tableOutput("stories")
+        dataTableOutput("stories")
       )
 
 
@@ -49,7 +55,7 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
       ),
 
       mainPanel(
-        "Lots of plotting."
+        plotOutput("languagePlot")
       )
     )
   ),
