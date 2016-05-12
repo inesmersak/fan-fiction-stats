@@ -34,7 +34,7 @@ def create_and_fill_database():
         address = 'http://archiveofourown.org/tags/Harry%20Potter%20-%20J*d*%20K*d*%20Rowling/works?'
 
         number_of_pages = get_data.get_number_of_pages(address)
-        start_number = 1
+        start_number = number_of_pages - 5
         number_of_threads = 50
         pages_per_thread = int(math.ceil(number_of_pages/number_of_threads))
 
