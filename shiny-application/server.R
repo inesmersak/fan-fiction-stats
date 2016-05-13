@@ -16,6 +16,8 @@ shinyServer(function(input, output) {
   tbl.authors <- tbl(conn, "author")
   tbl.characters <- tbl(conn, "character")
   tbl.contains_character <- tbl(conn, "contains_character")
+  tbl.is_in_category <- tbl(conn, "is_in_category")
+  tbl.category <- tbl(conn, "category")
 
 
   # RENDER TABLES
@@ -36,6 +38,10 @@ shinyServer(function(input, output) {
       left_join(
         left_join(tbl.contains_character, tbl.characters, by=c("character"="character_id")),
         by=c("story_id"="story")) %>%
+      left_join(
+        left_join(tbl.is_in_category, tbl.category, by=c("category"="category_id")),
+        by=c("story_id"="story")
+      ) %>%
       arrange(desc(hits)) %>%
       filter(hits > input$minViews) %>%
       filter(chapters == input$chapters)
@@ -45,7 +51,14 @@ shinyServer(function(input, output) {
     if (length(input$language) > 0) {
       t <- t %>% filter(language %in% c(input$language, NA))
     }
-    t <- t %>% group_by(story_id, title, summary, language, hits, chapters) %>%
+    if (length(input$category) > 0) {
+      t <- t %>% filter(category_name %in% c(input$category, NA))
+    }
+
+    if (input$rating != "All") {
+      t <- t %>% filter(rating == input$rating)
+    }
+    t <- t %>% group_by(story_id, title, summary, language, rating, hits, chapters, category_name) %>%
       summarise() %>%
       data.frame()
     if (nrow(t) > 0) {
@@ -53,7 +66,6 @@ shinyServer(function(input, output) {
       Encoding(t$summary) <- "UTF-8"
       t <- convert_to_encoding(t)
     }
-    t
   }, options = list(lengthMenu = c(5, 10, 15, 20), pageLength = 10))
 
 
@@ -91,6 +103,14 @@ shinyServer(function(input, output) {
     barplot(plotData, names.arg = lbls, xlab = "Language", ylab = "Number of stories", col = "blue",
             main = "Language in fan fictions")
 
+  })
+
+
+  output$ratingsPlot <- renderPlot({
+    plotData <- tbl.stories %>% select(rating) %>% data.frame() %>% table()
+    lbls <- paste(names(plotData), "\n", plotData, sep="")
+
+    pie3D(plotData, labels = lbls, explode = 0.1, main = "Ratings")
   })
 
 })

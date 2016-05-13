@@ -1,10 +1,11 @@
 library(shiny)
 
-RATINGS <- c("Teens And Up Audiences",
-            "General Audiences",
-            "Explicit",
-            "Mature",
-            "Not Rated")
+RATINGS <- c("All",
+             "Teen And Up Audiences",
+             "General Audiences",
+             "Explicit",
+             "Mature",
+             "Not Rated")
 
 CATEGORIES <- c("M/M", "F/M", "Gen", "Multi", "F/F", "Other")
 
@@ -21,9 +22,9 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
         uiOutput("languageSelector"),
         textOutput("someText"),
         selectInput("rating", label = "Rating",
-          choices = RATINGS),
+          choices = RATINGS, selected = 1),
         selectInput("category", label = "Category",
-          choices = CATEGORIES),
+          choices = CATEGORIES, multiple = TRUE),
         numericInput("chapters",
           label = "Number of chapters",
           value = 1,
@@ -55,7 +56,8 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
       ),
 
       mainPanel(
-        plotOutput("languagePlot")
+        plotOutput("languagePlot"),
+        plotOutput("ratingsPlot")
       )
     )
   ),
