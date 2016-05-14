@@ -35,19 +35,19 @@ class Database:
                  ")"
         fandom = "fandom (" \
                  "fandom_id SERIAL PRIMARY KEY, " \
-                 "name TEXT NOT NULL UNIQUE" \
+                 "fandom_name TEXT NOT NULL UNIQUE" \
                  ")"
         warning = "warning (" \
                   "warning_id SERIAL PRIMARY KEY, " \
-                  "description TEXT NOT NULL UNIQUE" \
+                  "warning_description TEXT NOT NULL UNIQUE" \
                   ")"
         category = "category (" \
                    "category_id SERIAL PRIMARY KEY, " \
-                   "name TEXT NOT NULL UNIQUE" \
+                   "category_name TEXT NOT NULL UNIQUE" \
                    ")"
         character = "character (" \
                     "character_id SERIAL PRIMARY KEY, " \
-                    "name TEXT NOT NULL UNIQUE" \
+                    "character_name TEXT NOT NULL UNIQUE" \
                     ")"
         story = "story (" \
                 "story_id INTEGER PRIMARY KEY, " \
@@ -66,7 +66,7 @@ class Database:
 
         language = "language (" \
                    "language_id SERIAL PRIMARY KEY, " \
-                   "name TEXT NOT NULL UNIQUE" \
+                   "language_name TEXT NOT NULL UNIQUE" \
                    ")"
 
         is_in_language = "is_in_language (" \
@@ -132,7 +132,7 @@ class Database:
             self.conn.commit()
 
         def insert_contains_character(character):
-            cursor.execute("SELECT character_id FROM character WHERE name = %s", [character, ])
+            cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [character, ])
             char_id = cursor.fetchone()[0]
             try:
                 cursor.executemany("INSERT INTO contains_character VALUES (%s, %s)", [(story.get('story_id'), char_id),
@@ -144,9 +144,9 @@ class Database:
         def insert_relationship(relationship):
             if len(relationship) < 2:  # TODO
                 return
-            cursor.execute("SELECT character_id FROM character WHERE name = %s", [relationship[0], ])
+            cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[0], ])
             id_0 = cursor.fetchone()[0]
-            cursor.execute("SELECT character_id FROM character WHERE name = %s", [relationship[1], ])
+            cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[1], ])
             id_1 = cursor.fetchone()[0]
             m, M = min(id_0, id_1), max(id_0, id_1)
             try:
@@ -157,9 +157,9 @@ class Database:
 
         def insert_contains_relationship(relationship):
             if len(relationship) > 1:
-                cursor.execute("SELECT character_id FROM character WHERE name = %s", [relationship[0], ])
+                cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[0], ])
                 id_0 = cursor.fetchone()[0]
-                cursor.execute("SELECT character_id FROM character WHERE name = %s", [relationship[1], ])
+                cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[1], ])
                 id_1 = cursor.fetchone()[0]
                 m, M = min(id_0, id_1), max(id_0, id_1)
                 try:
@@ -170,7 +170,7 @@ class Database:
                 self.conn.commit()
 
         def insert_is_in_category(cat):
-            cursor.execute("SELECT category_id FROM category WHERE name = %s", [cat, ])
+            cursor.execute("SELECT category_id FROM category WHERE category_name = %s", [cat, ])
             category_data = cursor.fetchone()
             if category_data:
                 cat_id = category_data[0]
@@ -182,7 +182,7 @@ class Database:
             self.conn.commit()
 
         def insert_has_warning(warn):
-            cursor.execute("SELECT warning_id FROM warning WHERE description = %s", [warn, ])
+            cursor.execute("SELECT warning_id FROM warning WHERE warning_description = %s", [warn, ])
             warn_id = cursor.fetchone()[0]
             try:
                 cursor.executemany("INSERT INTO has_warning VALUES (%s, %s)", [(story.get('story_id'), warn_id), ])
@@ -198,7 +198,7 @@ class Database:
             self.conn.commit()
 
         def insert_contains_fandom(fand):
-            cursor.execute("SELECT fandom_id FROM fandom WHERE name = %s", [fand, ])
+            cursor.execute("SELECT fandom_id FROM fandom WHERE fandom_name = %s", [fand, ])
             fand_id = cursor.fetchone()[0]
             try:
                 cursor.executemany("INSERT INTO contains_fandom VALUES (%s, %s)", [(story.get('story_id'), fand_id), ])
@@ -214,7 +214,7 @@ class Database:
             self.conn.commit()
 
         def is_in_language(lang):
-            cursor.execute("SELECT language_id FROM language WHERE name = %s", [lang, ])
+            cursor.execute("SELECT language_id FROM language WHERE language_name = %s", [lang, ])
             lang_id = cursor.fetchone()[0]
             try:
                 cursor.executemany("INSERT INTO is_in_language VALUES (%s, %s)", [(story.get('story_id'), lang_id), ])
