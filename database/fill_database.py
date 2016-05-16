@@ -1,7 +1,7 @@
 import threading
 import math
-from database.database import Database
-from database.config_database import *
+from database import Database
+from config_database import *
 from data_retrieval_parsing import get_data
 from data_retrieval_parsing import parse_data
 import time
@@ -46,8 +46,7 @@ def create_and_fill_database():
         th = []
         for i in range(start_number, number_of_pages + 1, pages_per_thread):
             th.append(threading.Thread(target=fill_database_in_range,
-                                       args=(i, min(i + pages_per_thread - 1, number_of_pages), address, db,
-                                             i // pages_per_thread)))
+                                       args=(i, min(i + pages_per_thread - 1, number_of_pages), address, db)))
 
         for thread in th:
             thread.start()
