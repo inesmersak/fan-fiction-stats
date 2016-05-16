@@ -2,8 +2,6 @@ import threading
 import math
 from database.database import Database
 from database.config_database import *
-import data
-import
 import time
 import datetime
 
