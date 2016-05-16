@@ -2,6 +2,8 @@ import threading
 import math
 from database.database import Database
 from database.config_database import *
+from data_retrieval_parsing import get_data
+from data_retrieval_parsing import parse_data
 import time
 import datetime
 
