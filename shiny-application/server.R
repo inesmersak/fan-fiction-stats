@@ -100,7 +100,7 @@ shinyServer(function(input, output) {
     plotData <- storyTable %>% convert_to_encoding() %>% table()
     lbls <- paste(names(plotData), "\n", plotData, sep="")
 
-    barplot(plotData, names.arg = lbls, xlab = "Language", ylab = "Number of stories", col = "blue",
+    barplot(plotData, names.arg = lbls, xlab = "Language", ylab = "Number of stories", col = "limegreen",
             main = "Language in fan fictions")
 
   })
@@ -111,6 +111,17 @@ shinyServer(function(input, output) {
     lbls <- paste(names(plotData), "\n", plotData, sep="")
 
     pie3D(plotData, labels = lbls, explode = 0.1, main = "Ratings")
+  })
+
+  output$wordsPlot <- renderPlot({
+    plotData <- tbl.stories %>% arrange(words) %>% select(words) %>% data.frame()
+    plotData <- c(plotData[,1])
+    bins <- seq(min(plotData), max(plotData), length.out = 100)
+    # plotData <- c(10,20,25,37,100,1921,543,29,46,786,1123)
+    numberofStories <- 2000
+
+    # draw the histogram with the specified number of bins
+    hist(plotData, ylim=c(0,2000), breaks=10, xlim=c(min(plotData), 10000), col = 'darkgray', border = 'white')
   })
 
 })

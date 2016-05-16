@@ -57,7 +57,8 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
 
       mainPanel(
         plotOutput("languagePlot"),
-        plotOutput("ratingsPlot")
+        plotOutput("ratingsPlot"),
+        plotOutput("wordsPlot")
       )
     )
   ),
