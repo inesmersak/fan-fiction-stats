@@ -1,9 +1,9 @@
 import threading
 import math
-from database import Database
-from config_database import *
-import get_data
-import parse_data
+from database.database import Database
+from database.config_database import *
+import data
+import
 import time
 import datetime
 

@@ -12,3 +12,4 @@ auth.py
 auth.R
 .idea
 data-retrieval-parsing/pages
+database/config_database.py
