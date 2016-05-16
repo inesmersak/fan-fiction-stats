@@ -8,27 +8,30 @@ import time
 import datetime
 
 
-def fill_database_in_range(start, end, address, db, thread_id):
+def fill_database_in_range(start, end, address, db):
+    """
+    Fills the database with stories from pages {start}-{end}. This function is called in a thread.
+    :param start: The first page to collect stories from.
+    :param end: The last page to collect stories from.
+    :param address: The address from which to collect HTML code.
+    :param db: The database to insert stories into.
+    """
     pages = get_data.get_pages(start, end, address)
-    p = 1
     for page in pages:
         page_data = parse_data.parse_stories_from_page(page)
-        s = 1
         for story in page_data:
             if not db.author_exists(story):
                 author = parse_data.parse_user_data(story['author'], get_data.get_user_data(story['author']))
                 db.insert_author(author)
             if not db.story_exists(story):
                 db.insert_story(story)
-            # with open('data/id' + str(thread_id) + '-p' + str(p) + '-s' + str(s) + '.out',
-            # 'w', encoding='utf8') as inp:
-            #     for k, v in story.items():
-            #         print('{0}: {1}'.format(k, v), file=inp)
-            s += 1
-        p += 1
 
 
 def create_and_fill_database():
+    """
+    The main function to fill the database with stories. Creates multiple threads and calls the fill_database_in_range
+    function in each thread.
+    """
     t0 = time.time()
     db = Database(host, db_name, user, password)
     if db.connect():
@@ -57,4 +60,3 @@ def create_and_fill_database():
 
 if __name__ == "__main__":
     create_and_fill_database()
-    # print(parse_data.parse_user_data(get_data.get_user_data('inspiritedmama')))

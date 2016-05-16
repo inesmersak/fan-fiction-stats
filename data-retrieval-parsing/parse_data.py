@@ -140,6 +140,12 @@ def parse_stories_from_page(page_markup, debug=False):
 
 
 def parse_user_data(username, user_profile_html):
+    """
+    Returns a dictionary containing user data.
+    :param username: Username of the user whose data we want to get.
+    :param user_profile_html: HTML code of the user's profile page.
+    :return: user_data
+    """
     profile = BeautifulSoup(user_profile_html, 'html.parser')
     user_data = dict()
     user_data['username'] = username
