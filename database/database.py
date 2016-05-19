@@ -2,7 +2,6 @@ import psycopg2
 import psycopg2.extensions
 from config_database import *
 
-
 class Database:
     def __init__(self, host, db_name, user, password):
         self.host = host
@@ -126,60 +125,77 @@ class Database:
 
         def insert_character(character):
             try:
-                cursor.execute("INSERT INTO character VALUES (default, %s)", [character, ])
-            except psycopg2.IntegrityError:
-                self.conn.rollback()
-            except psycopg2.InternalError:
-                self.conn.rollback()
-            else:
-                self.conn.commit()
-
-        def insert_contains_character(character):
-            cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [character, ])
-            char_id = cursor.fetchone()[0]
-            try:
-                cursor.executemany("INSERT INTO contains_character VALUES (%s, %s)", [(story.get('story_id'), char_id),
-                                                                                      ])
-            except psycopg2.IntegrityError:
-                self.conn.rollback()
-            except psycopg2.InternalError:
-                self.conn.rollback()
-            else:
-                self.conn.commit()
-
-        def insert_relationship(relationship):
-            if len(relationship) < 2:  # TODO
-                return
-            cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[0], ])
-            id_0 = cursor.fetchone()[0]
-            cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[1], ])
-            id_1 = cursor.fetchone()[0]
-            m, M = min(id_0, id_1), max(id_0, id_1)
-            try:
-                cursor.executemany("INSERT INTO relationship VALUES (%s, %s)", [((m, M)), ])
-            except psycopg2.IntegrityError:
-                self.conn.rollback()
-            except psycopg2.InternalError:
-                self.conn.rollback()
-            else:
-                self.conn.commit()
-
-        def insert_contains_relationship(relationship):
-            if len(relationship) > 1:
-                cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[0], ])
-                id_0 = cursor.fetchone()[0]
-                cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[1], ])
-                id_1 = cursor.fetchone()[0]
-                m, M = min(id_0, id_1), max(id_0, id_1)
                 try:
-                    cursor.executemany("INSERT INTO contains_relationship VALUES (%s, %s, %s)",
-                                       [(story.get('story_id'), m, M), ])
+                    cursor.execute("INSERT INTO character VALUES (default, %s)", [character, ])
                 except psycopg2.IntegrityError:
                     self.conn.rollback()
                 except psycopg2.InternalError:
                     self.conn.rollback()
                 else:
                     self.conn.commit()
+            except TypeError:
+                # print("Char", story.get('story_id'), character)
+                pass
+
+        def insert_contains_character(character):
+            try:
+                cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [character, ])
+                char_id = cursor.fetchone()[0]
+                try:
+                    cursor.executemany("INSERT INTO contains_character VALUES (%s, %s)", [(story.get('story_id'), char_id),
+                                                                                          ])
+                except psycopg2.IntegrityError:
+                    self.conn.rollback()
+                except psycopg2.InternalError:
+                    self.conn.rollback()
+                else:
+                    self.conn.commit()
+            except TypeError:
+                # cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [character, ])
+                # print("Cont_Char", story.get('story_id'), character)
+                # print(cursor.fetchall())
+                pass
+
+        def insert_relationship(relationship):
+            try:
+                if len(relationship) > 1:
+                    cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[0], ])
+                    id_0 = cursor.fetchone()[0]
+                    cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[1], ])
+                    id_1 = cursor.fetchone()[0]
+                    m, M = min(id_0, id_1), max(id_0, id_1)
+                    try:
+                        cursor.executemany("INSERT INTO relationship VALUES (%s, %s)", [((m, M)), ])
+                    except psycopg2.IntegrityError:
+                        self.conn.rollback()
+                    except psycopg2.InternalError:
+                        self.conn.rollback()
+                    else:
+                        self.conn.commit()
+            except TypeError:
+                # print("ship", story.get('story_id'), relationship)
+                pass
+
+        def insert_contains_relationship(relationship):
+            try:
+                if len(relationship) > 1:
+                    cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[0], ])
+                    id_0 = cursor.fetchone()[0]
+                    cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[1], ])
+                    id_1 = cursor.fetchone()[0]
+                    m, M = min(id_0, id_1), max(id_0, id_1)
+                    try:
+                        cursor.executemany("INSERT INTO contains_relationship VALUES (%s, %s, %s)",
+                                           [(story.get('story_id'), m, M), ])
+                    except psycopg2.IntegrityError:
+                        self.conn.rollback()
+                    except psycopg2.InternalError:
+                        self.conn.rollback()
+                    else:
+                        self.conn.commit()
+            except TypeError:
+                # print("cont_ship", story.get('story_id'), relationship)
+                pass
 
         def insert_is_in_category(cat):
             cursor.execute("SELECT category_id FROM category WHERE category_name = %s", [cat, ])
@@ -197,16 +213,20 @@ class Database:
                     self.conn.commit()
 
         def insert_has_warning(warn):
-            cursor.execute("SELECT warning_id FROM warning WHERE warning_description = %s", [warn, ])
-            warn_id = cursor.fetchone()[0]
             try:
-                cursor.executemany("INSERT INTO has_warning VALUES (%s, %s)", [(story.get('story_id'), warn_id), ])
-            except psycopg2.IntegrityError:
-                self.conn.rollback()
-            except psycopg2.InternalError:
-                self.conn.rollback()
-            else:
-                self.conn.commit()
+                cursor.execute("SELECT warning_id FROM warning WHERE warning_description = %s", [warn, ])
+                warn_id = cursor.fetchone()[0]
+                try:
+                    cursor.executemany("INSERT INTO has_warning VALUES (%s, %s)", [(story.get('story_id'), warn_id), ])
+                except psycopg2.IntegrityError:
+                    self.conn.rollback()
+                except psycopg2.InternalError:
+                    self.conn.rollback()
+                else:
+                    self.conn.commit()
+            except TypeError:
+                # print("has_warn", story.get('story_id'), warn)
+                pass
 
         def insert_fandom(fand):
             try:
@@ -219,16 +239,20 @@ class Database:
                 self.conn.commit()
 
         def insert_contains_fandom(fand):
-            cursor.execute("SELECT fandom_id FROM fandom WHERE fandom_name = %s", [fand, ])
-            fand_id = cursor.fetchone()[0]
             try:
-                cursor.executemany("INSERT INTO contains_fandom VALUES (%s, %s)", [(story.get('story_id'), fand_id), ])
-            except psycopg2.IntegrityError:
-                self.conn.rollback()
-            except psycopg2.InternalError:
-                self.conn.rollback()
-            else:
-                self.conn.commit()
+                cursor.execute("SELECT fandom_id FROM fandom WHERE fandom_name = %s", [fand, ])
+                fand_id = cursor.fetchone()[0]
+                try:
+                    cursor.executemany("INSERT INTO contains_fandom VALUES (%s, %s)", [(story.get('story_id'), fand_id), ])
+                except psycopg2.IntegrityError:
+                    self.conn.rollback()
+                except psycopg2.InternalError:
+                    self.conn.rollback()
+                else:
+                    self.conn.commit()
+            except TypeError:
+                # print("cont_fand", story.get('story_id'), fand)
+                pass
 
         def insert_language(lang):
             try:
@@ -241,16 +265,20 @@ class Database:
                 self.conn.commit()
 
         def is_in_language(lang):
-            cursor.execute("SELECT language_id FROM language WHERE language_name = %s", [lang, ])
-            lang_id = cursor.fetchone()[0]
             try:
-                cursor.executemany("INSERT INTO is_in_language VALUES (%s, %s)", [(story.get('story_id'), lang_id), ])
-            except psycopg2.IntegrityError:
-                self.conn.rollback()
-            except psycopg2.InternalError:
-                self.conn.rollback()
-            else:
-                self.conn.commit()
+                cursor.execute("SELECT language_id FROM language WHERE language_name = %s", [lang, ])
+                lang_id = cursor.fetchone()[0]
+                try:
+                    cursor.executemany("INSERT INTO is_in_language VALUES (%s, %s)", [(story.get('story_id'), lang_id), ])
+                except psycopg2.IntegrityError:
+                    self.conn.rollback()
+                except psycopg2.InternalError:
+                    self.conn.rollback()
+                else:
+                    self.conn.commit()
+            except TypeError:
+                # print("cont_fand", story.get('story_id'), fand)
+                pass
 
         # STORY
         cursor = self.conn.cursor()
