@@ -126,10 +126,11 @@ class Database:
         def insert_character(character):
             try:
                 try:
-                    cursor.execute("INSERT INTO character VALUES (default, %s)", [character, ])
+                    cursor.execute("INSERT INTO character VALUES (default, %s)", [character])
                 except psycopg2.IntegrityError:
                     self.conn.rollback()
                 except psycopg2.InternalError:
+                    print(character, story.get('characters'), story.get('story_id'))
                     self.conn.rollback()
                 else:
                     self.conn.commit()
@@ -139,7 +140,7 @@ class Database:
 
         def insert_contains_character(character):
             try:
-                cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [character, ])
+                cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [character])
                 char_id = cursor.fetchone()[0]
                 try:
                     cursor.executemany("INSERT INTO contains_character VALUES (%s, %s)", [(story.get('story_id'), char_id),
@@ -151,7 +152,7 @@ class Database:
                 else:
                     self.conn.commit()
             except TypeError:
-                # cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [character, ])
+                # cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [character])
                 # print("Cont_Char", story.get('story_id'), character)
                 # print(cursor.fetchall())
                 pass
@@ -159,9 +160,9 @@ class Database:
         def insert_relationship(relationship):
             try:
                 if len(relationship) > 1:
-                    cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[0], ])
+                    cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[0]])
                     id_0 = cursor.fetchone()[0]
-                    cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[1], ])
+                    cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[1]])
                     id_1 = cursor.fetchone()[0]
                     m, M = min(id_0, id_1), max(id_0, id_1)
                     try:
@@ -179,9 +180,9 @@ class Database:
         def insert_contains_relationship(relationship):
             try:
                 if len(relationship) > 1:
-                    cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[0], ])
+                    cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[0]])
                     id_0 = cursor.fetchone()[0]
-                    cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[1], ])
+                    cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[1]])
                     id_1 = cursor.fetchone()[0]
                     m, M = min(id_0, id_1), max(id_0, id_1)
                     try:
@@ -198,7 +199,7 @@ class Database:
                 pass
 
         def insert_is_in_category(cat):
-            cursor.execute("SELECT category_id FROM category WHERE category_name = %s", [cat, ])
+            cursor.execute("SELECT category_id FROM category WHERE category_name = %s", [cat])
             category_data = cursor.fetchone()
             if category_data:
                 cat_id = category_data[0]
