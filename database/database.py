@@ -1,6 +1,6 @@
 import psycopg2
 import psycopg2.extensions
-from config_database import *
+
 
 class Database:
     def __init__(self, host, db_name, user, password):
@@ -122,19 +122,23 @@ class Database:
         self.fill_warnings()
 
     def insert_story(self, story):
+        f = open('type_errors.log', 'w', encoding='utf-8')
 
         def insert_character(character):
             try:
                 try:
                     cursor.execute("INSERT INTO character VALUES (default, %s)", [character])
-                except psycopg2.IntegrityError:
+                except psycopg2.IntegrityError as e:
                     self.conn.rollback()
-                except psycopg2.InternalError:
+                    print("{0}".format(e))
+                except psycopg2.InternalError as e:
                     print(character, story.get('characters'), story.get('story_id'))
+                    print("{0}".format(e))
                     self.conn.rollback()
                 else:
                     self.conn.commit()
-            except TypeError:
+            except TypeError as e:
+                print("{0}".format(e), file=f)
                 # print("Char", story.get('story_id'), character)
                 pass
 
@@ -145,13 +149,16 @@ class Database:
                 try:
                     cursor.executemany("INSERT INTO contains_character VALUES (%s, %s)", [(story.get('story_id'), char_id),
                                                                                           ])
-                except psycopg2.IntegrityError:
+                except psycopg2.IntegrityError as e:
                     self.conn.rollback()
-                except psycopg2.InternalError:
+                    print("{0}".format(e))
+                except psycopg2.InternalError as e:
                     self.conn.rollback()
+                    print("{0}".format(e))
                 else:
                     self.conn.commit()
-            except TypeError:
+            except TypeError as e:
+                print("{0}".format(e), file=f)
                 # cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [character])
                 # print("Cont_Char", story.get('story_id'), character)
                 # print(cursor.fetchall())
@@ -167,13 +174,16 @@ class Database:
                     m, M = min(id_0, id_1), max(id_0, id_1)
                     try:
                         cursor.executemany("INSERT INTO relationship VALUES (%s, %s)", [((m, M)), ])
-                    except psycopg2.IntegrityError:
+                    except psycopg2.IntegrityError as e:
                         self.conn.rollback()
-                    except psycopg2.InternalError:
+                        print("{0}".format(e))
+                    except psycopg2.InternalError as e:
                         self.conn.rollback()
+                        print("{0}".format(e))
                     else:
                         self.conn.commit()
-            except TypeError:
+            except TypeError as e:
+                print("{0}".format(e), file=f)
                 # print("ship", story.get('story_id'), relationship)
                 pass
 
@@ -188,13 +198,16 @@ class Database:
                     try:
                         cursor.executemany("INSERT INTO contains_relationship VALUES (%s, %s, %s)",
                                            [(story.get('story_id'), m, M), ])
-                    except psycopg2.IntegrityError:
+                    except psycopg2.IntegrityError as e:
                         self.conn.rollback()
-                    except psycopg2.InternalError:
+                        print("{0}".format(e))
+                    except psycopg2.InternalError as e:
                         self.conn.rollback()
+                        print("{0}".format(e))
                     else:
                         self.conn.commit()
-            except TypeError:
+            except TypeError as e:
+                print("{0}".format(e), file=f)
                 # print("cont_ship", story.get('story_id'), relationship)
                 pass
 
@@ -206,10 +219,12 @@ class Database:
                 try:
                     cursor.executemany("INSERT INTO is_in_category VALUES (%s, %s)", [(story.get('story_id'), cat_id),
                                                                                       ])
-                except psycopg2.IntegrityError:
+                except psycopg2.IntegrityError as e:
                     self.conn.rollback()
-                except psycopg2.InternalError:
+                    print("{0}".format(e))
+                except psycopg2.InternalError as e:
                     self.conn.rollback()
+                    print("{0}".format(e))
                 else:
                     self.conn.commit()
 
@@ -225,7 +240,8 @@ class Database:
                     self.conn.rollback()
                 else:
                     self.conn.commit()
-            except TypeError:
+            except TypeError as e:
+                print("{0}".format(e), file=f)
                 # print("has_warn", story.get('story_id'), warn)
                 pass
 
@@ -251,7 +267,8 @@ class Database:
                     self.conn.rollback()
                 else:
                     self.conn.commit()
-            except TypeError:
+            except TypeError as e:
+                print("{0}".format(e), file=f)
                 # print("cont_fand", story.get('story_id'), fand)
                 pass
 
@@ -277,7 +294,8 @@ class Database:
                     self.conn.rollback()
                 else:
                     self.conn.commit()
-            except TypeError:
+            except TypeError as e:
+                print("{0}".format(e), file=f)
                 # print("cont_fand", story.get('story_id'), fand)
                 pass
 
@@ -344,6 +362,7 @@ class Database:
         is_in_language(story.get('language'))
 
         cursor.close()
+        f.close()
 
     def insert_author(self, author):
         cursor = self.conn.cursor()
