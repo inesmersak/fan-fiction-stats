@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import datetime
 import re
+from data_retrieval_parsing.languages import *
 
 
 def prepare_date(date_string):
@@ -102,6 +103,7 @@ def parse_story_data(story_html, debug=False):
                 story_data[class_name] = number
             else:
                 story_data[class_name] = dd_text
+    story_data['language'] = language[story_data['language']]
 
     current_chapters, all_chapters = story_data['chapters'].split('/')
     if current_chapters == all_chapters:

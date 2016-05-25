@@ -42,8 +42,7 @@ def create_and_fill_database():
         # address = 'http://archiveofourown.org/works/search?utf8=%E2%9C%93&work_search%5Bquery%5D=&work_search%5Btitle%5D=When+Dark+Turns+to+Light&work_search%5Bcreator%5D=nerd4rice725&work_search%5Brevised_at%5D=&work_search%5Bcomplete%5D=0&work_search%5Bsingle_chapter%5D=0&work_search%5Bword_count%5D=&work_search%5Blanguage_id%5D=&work_search%5Bfandom_names%5D=&work_search%5Brating_ids%5D=&work_search%5Bcharacter_names%5D=&work_search%5Brelationship_names%5D=&work_search%5Bfreeform_names%5D=&work_search%5Bhits%5D=&work_search%5Bkudos_count%5D=&work_search%5Bcomments_count%5D=&work_search%5Bbookmarks_count%5D=&work_search%5Bsort_column%5D=&work_search%5Bsort_direction%5D=&commit=Search'
 
         number_of_pages = get_data.get_number_of_pages(address)
-        #number_of_pages = 1
-        start_number = number_of_pages - 40
+        start_number = number_of_pages - 1000
         number_of_threads = 50
         pages_per_thread = int(math.ceil(number_of_pages/number_of_threads))
 
