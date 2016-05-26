@@ -1,5 +1,6 @@
 import psycopg2
 import psycopg2.extensions
+from data_retrieval_parsing import languages
 
 
 class Database:
@@ -54,6 +55,7 @@ class Database:
                 "written_by INTEGER NOT NULL REFERENCES author(author_id), " \
                 "title TEXT NOT NULL, " \
                 "date_published DATE NOT NULL, " \
+                "language INTEGER NOT NULL REFERENCES language(language_id), " \
                 "summary TEXT, " \
                 "completed BOOLEAN NOT NULL, " \
                 "words INTEGER NOT NULL, " \
@@ -66,14 +68,9 @@ class Database:
 
         language = "language (" \
                    "language_id SERIAL PRIMARY KEY, " \
-                   "language_name TEXT NOT NULL UNIQUE" \
+                   "language_name TEXT NOT NULL UNIQUE, " \
+                   "language_original TEXT NOT NULL UNIQUE" \
                    ")"
-
-        is_in_language = "is_in_language (" \
-                         "story INTEGER NOT NULL REFERENCES story(story_id), " \
-                         "language INTEGER NOT NULL REFERENCES language(language_id)," \
-                         "PRIMARY KEY (story, language)" \
-                         ")"
 
         contains_fandom = "contains_fandom(" \
                           "story INTEGER NOT NULL REFERENCES story(story_id), " \
@@ -110,7 +107,7 @@ class Database:
 
         tables = [author, fandom, category, character, story, warning,
                   contains_fandom, has_warning, is_in_category, contains_character, relationship,
-                  contains_relationship, language, is_in_language]
+                  contains_relationship, language]
 
         cursor = self.conn.cursor()
         for table in tables:
@@ -121,6 +118,7 @@ class Database:
 
         self.fill_categories()
         self.fill_warnings()
+        self.fill_languages()
 
     def insert_story(self, story):
         f = open('type_errors.log', 'w', encoding='utf-8')
@@ -276,15 +274,17 @@ class Database:
             #     # print("cont_fand", story.get('story_id'), fand)
             #     pass
 
-        def insert_language(lang):
-            try:
-                cursor.execute("INSERT INTO language VALUES (default, %s)", [lang, ])
-            except psycopg2.IntegrityError:
-                self.conn.rollback()
-            except psycopg2.InternalError:
-                self.conn.rollback()
-            else:
-                self.conn.commit()
+        # def insert_language(lang):
+        #     cursor.execute("SELECT language_id FROM language WHERE language_original = %s", [lang])
+        #     lang_id = cursor.fetchone()[0]
+        #     try:
+        #         pass
+        #     except psycopg2.IntegrityError:
+        #         self.conn.rollback()
+        #     except psycopg2.InternalError:
+        #         self.conn.rollback()
+        #     else:
+        #         self.conn.commit()
 
         def is_in_language(lang):
             # try:
@@ -312,6 +312,11 @@ class Database:
             # print('insert_story internal error')
             print("{0}".format(e), file=g)
             author = None
+        try:
+            cursor.execute("SELECT language_id FROM language WHERE language_original = %s", [story.get('language')])
+            language = cursor.fetchone()
+        except psycopg2.InternalError:
+            language = None
         query = "INSERT INTO story VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         try:
             cursor.executemany(query, [
@@ -319,6 +324,7 @@ class Database:
                  author,
                  story.get('title'),
                  story.get('date_published'),
+                 language,
                  story.get('summary'),
                  story.get('completed'),
                  story.get('words'),
@@ -370,9 +376,9 @@ class Database:
             insert_fandom(fandom)
             insert_contains_fandom(fandom)
 
-        # LANGUAGE
-        insert_language(story.get('language'))
-        is_in_language(story.get('language'))
+        # # LANGUAGE
+        # insert_language(story.get('language'))
+        # is_in_language(story.get('language'))
 
         cursor.close()
         f.close()
@@ -388,7 +394,7 @@ class Database:
                                        ])
         except psycopg2.IntegrityError as e:
             # print("Author Integrity Error", e)
-            print("{0}".format(e), file=h)
+            # print("{0}".format(e), file=h)
             self.conn.rollback()
         except psycopg2.InternalError as e:
             print("Author Internal Error", e)
@@ -431,6 +437,14 @@ class Database:
                 self.conn.rollback()
             else:
                 self.conn.commit()
+        cursor.close()
+
+    def fill_languages(self):
+        cursor = self.conn.cursor()
+        for key in languages.language:
+            self.execute = cursor.execute("INSERT INTO language VALUES (default, %s, %s)", [languages.language.get("key"),
+                                                                                            key])
+            self.conn.commit()
         cursor.close()
 
     def story_exists(self, story):
