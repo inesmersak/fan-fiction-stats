@@ -68,8 +68,8 @@ class Database:
 
         language = "language (" \
                    "language_id SERIAL PRIMARY KEY, " \
-                   "language_name TEXT NOT NULL UNIQUE, " \
-                   "language_original TEXT NOT NULL UNIQUE" \
+                   "language_original TEXT NOT NULL UNIQUE, " \
+                   "language_name TEXT NOT NULL UNIQUE" \
                    ")"
 
         contains_fandom = "contains_fandom(" \
@@ -105,9 +105,9 @@ class Database:
                                 "PRIMARY KEY (story, person_1, person_2)" \
                                 ")"
 
-        tables = [author, fandom, category, character, story, warning,
+        tables = [author, fandom, category, character, language, story, warning,
                   contains_fandom, has_warning, is_in_category, contains_character, relationship,
-                  contains_relationship, language]
+                  contains_relationship]
 
         cursor = self.conn.cursor()
         for table in tables:
@@ -130,19 +130,15 @@ class Database:
                 cursor.execute("INSERT INTO character VALUES (default, %s)", [character])
             except psycopg2.IntegrityError as e:
                 self.conn.rollback()
-                #print("{0}".format(e), "integrity")
                 print("{0}".format(e), file=h)
             except psycopg2.InternalError as e:
-                #print(character, story.get('characters'), story.get('story_id'))
                 print("{0}".format(e), file=g)
-                #print("{0}".format(e), "internal")
                 self.conn.rollback()
             else:
                 self.conn.commit()
 
 
         def insert_contains_character(character):
-            # try:
             cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [character])
             char_id = cursor.fetchone()[0]
             try:
@@ -156,16 +152,8 @@ class Database:
                 print("{0}".format(e), file=g)
             else:
                 self.conn.commit()
-            # except TypeError as e:
-            #     print("{0}".format(e), file=f)
-            #     print("{0}".format(e), "inserting char")
-            #     # cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [character])
-            #     # print("Cont_Char", story.get('story_id'), character)
-            #     # print(cursor.fetchall())
-            #     pass
 
         def insert_relationship(relationship):
-            # try:
             if len(relationship) > 1:
                 cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[0]])
                 id_0 = cursor.fetchone()[0]
@@ -182,14 +170,8 @@ class Database:
                     #print("{0}".format(e), "internal")
                 else:
                     self.conn.commit()
-            # except TypeError as e:
-            #     print("{0}".format(e), file=f)
-            #     print("{0}".format(e), "ship")
-            #     # print("ship", story.get('story_id'), relationship)
-            #     pass
 
         def insert_contains_relationship(relationship):
-            # try:
             if len(relationship) > 1:
                 cursor.execute("SELECT character_id FROM character WHERE character_name = %s", [relationship[0]])
                 id_0 = cursor.fetchone()[0]
@@ -207,11 +189,6 @@ class Database:
                     print("{0}".format(e), file=g)
                 else:
                     self.conn.commit()
-            # except TypeError as e:
-            #     print("{0}".format(e), file=f)
-            #     print("{0}".format(e), "containing ship")
-            #     # print("cont_ship", story.get('story_id'), relationship)
-            #     pass
 
         def insert_is_in_category(cat):
             cursor.execute("SELECT category_id FROM category WHERE category_name = %s", [cat])
@@ -231,7 +208,6 @@ class Database:
                     self.conn.commit()
 
         def insert_has_warning(warn):
-            # try:
             cursor.execute("SELECT warning_id FROM warning WHERE warning_description = %s", [warn, ])
             warn_id = cursor.fetchone()[0]
             try:
@@ -242,10 +218,6 @@ class Database:
                 self.conn.rollback()
             else:
                 self.conn.commit()
-            # except TypeError as e:
-            #     print("{0}".format(e), file=f)
-            #     # print("has_warn", story.get('story_id'), warn)
-            #     pass
 
         def insert_fandom(fand):
             try:
@@ -258,7 +230,6 @@ class Database:
                 self.conn.commit()
 
         def insert_contains_fandom(fand):
-            # try:
             cursor.execute("SELECT fandom_id FROM fandom WHERE fandom_name = %s", [fand, ])
             fand_id = cursor.fetchone()[0]
             try:
@@ -269,26 +240,9 @@ class Database:
                 self.conn.rollback()
             else:
                 self.conn.commit()
-            # except TypeError as e:
-            #     print("{0}".format(e), file=f)
-            #     # print("cont_fand", story.get('story_id'), fand)
-            #     pass
-
-        # def insert_language(lang):
-        #     cursor.execute("SELECT language_id FROM language WHERE language_original = %s", [lang])
-        #     lang_id = cursor.fetchone()[0]
-        #     try:
-        #         pass
-        #     except psycopg2.IntegrityError:
-        #         self.conn.rollback()
-        #     except psycopg2.InternalError:
-        #         self.conn.rollback()
-        #     else:
-        #         self.conn.commit()
 
         def is_in_language(lang):
-            # try:
-            cursor.execute("SELECT language_id FROM language WHERE language_name = %s", [lang, ])
+            cursor.execute("SELECT language_id FROM language WHERE language_original = %s", [lang, ])
             lang_id = cursor.fetchone()[0]
             try:
                 cursor.executemany("INSERT INTO is_in_language VALUES (%s, %s)", [(story.get('story_id'), lang_id), ])
@@ -298,10 +252,6 @@ class Database:
                 self.conn.rollback()
             else:
                 self.conn.commit()
-            # except TypeError as e:
-            #     print("{0}".format(e), file=f)
-            #     # print("cont_fand", story.get('story_id'), fand)
-            #     pass
 
         # STORY
         cursor = self.conn.cursor()
@@ -309,15 +259,14 @@ class Database:
             cursor.execute("SELECT author_id FROM author WHERE username = %s", [story.get('author')])
             author = cursor.fetchone()
         except psycopg2.InternalError as e:
-            # print('insert_story internal error')
             print("{0}".format(e), file=g)
             author = None
         try:
-            cursor.execute("SELECT language_id FROM language WHERE language_original = %s", [story.get('language')])
+            cursor.execute("SELECT language_id FROM language WHERE language_name = %s", [story.get('language')])
             language = cursor.fetchone()
         except psycopg2.InternalError:
             language = None
-        query = "INSERT INTO story VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        query = "INSERT INTO story VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         try:
             cursor.executemany(query, [
                 (story.get('story_id'),
@@ -330,7 +279,7 @@ class Database:
                  story.get('words'),
                  story.get('chapters'),
                  story.get('rating'),
-                 story.get('hits'),
+                 story.get('hits', 0),
                  story.get('kudos', 0),
                  story.get('comments', 0)
                  )
@@ -376,10 +325,6 @@ class Database:
             insert_fandom(fandom)
             insert_contains_fandom(fandom)
 
-        # # LANGUAGE
-        # insert_language(story.get('language'))
-        # is_in_language(story.get('language'))
-
         cursor.close()
         f.close()
 
@@ -393,12 +338,9 @@ class Database:
                                         author.get('birthday')),
                                        ])
         except psycopg2.IntegrityError as e:
-            # print("Author Integrity Error", e)
-            # print("{0}".format(e), file=h)
             self.conn.rollback()
         except psycopg2.InternalError as e:
             print("Author Internal Error", e)
-            # print("{0}".format(e))
             self.conn.rollback()
         else:
             self.conn.commit()
@@ -441,10 +383,16 @@ class Database:
 
     def fill_languages(self):
         cursor = self.conn.cursor()
+        query = "INSERT INTO language VALUES (default, %s, %s)"
         for key in languages.language:
-            self.execute = cursor.execute("INSERT INTO language VALUES (default, %s, %s)", [languages.language.get("key"),
-                                                                                            key])
-            self.conn.commit()
+            try:
+                self.execute = cursor.execute(query, [key, languages.language.get(key)])
+            except psycopg2.IntegrityError:
+                self.conn.rollback()
+            except psycopg2.InternalError:
+                self.conn.rollback()
+            else:
+                self.conn.commit()
         cursor.close()
 
     def story_exists(self, story):
