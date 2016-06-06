@@ -1,5 +1,6 @@
 import psycopg2
 import psycopg2.extensions
+from psycopg2.extensions import AsIs
 from data_retrieval_parsing import languages
 
 
@@ -421,6 +422,48 @@ class Database:
             author_id = None
         cursor.close()
         if author_id:
+            return True
+        else:
+            return False
+
+    def grant_permissions(self, grantee=None):
+        """
+        Grants permissions to connect to the database and gives all privileges on all tables in public schema.
+        :param grantee: The person to whom admin permissions are granted. If empty, view permissions are instead
+        granted to the public account.
+        :return:
+        """
+        cursor = self.conn.cursor()
+        if not grantee:  # we are granting reading permission to the public account
+            try:
+                cursor.execute("GRANT CONNECT ON DATABASE %s TO javnost", [AsIs(self.db_name), ])
+                cursor.execute("GRANT SELECT ON ALL TABLES IN SCHEMA public TO javnost")
+            except psycopg2.InternalError as e:
+                print(e)
+        else:  # granting admin permissions to a user
+            try:
+                cursor.execute("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", [(AsIs(self.db_name), AsIs(grantee))])
+                cursor.execute("GRANT ALL PRIVILEGES ON SCHEMA public TO %s", [AsIs(grantee), ])
+                cursor.execute("GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO %s", [AsIs(grantee), ])
+            except psycopg2.InternalError as e:
+                print(e)
+        cursor.close()
+
+    def drop_all_tables(self):
+        """
+        Drops all tables if given the confirmation from user.
+        :return: True if the tables were dropped, False otherwise.
+        """
+        confirmation = input("This will drop all tables. Are you sure you want to proceed? (y/n) ")
+        if confirmation == "y":
+            cursor = self.conn.cursor()
+            try:
+                cursor.execute("DROP SCHEMA public CASCADE")
+                cursor.execute("CREATE SCHEMA public")
+                cursor.execute("GRANT ALL ON SCHEMA public TO public")
+            except psycopg2.InternalError as e:
+                print(e)
+            cursor.close()
             return True
         else:
             return False
