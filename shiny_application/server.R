@@ -18,6 +18,7 @@ shinyServer(function(input, output) {
   tbl.contains_character <- tbl(conn, "contains_character")
   tbl.is_in_category <- tbl(conn, "is_in_category")
   tbl.category <- tbl(conn, "category")
+  tbl.language <- tbl(conn, "language")
 
 
   # RENDER TABLES
@@ -42,14 +43,15 @@ shinyServer(function(input, output) {
         left_join(tbl.is_in_category, tbl.category, by=c("category"="category_id")),
         by=c("story_id"="story")
       ) %>%
+      left_join(tbl.language, by=c("language"="language_id")) %>%
       arrange(desc(hits)) %>%
       filter(hits > input$minViews) %>%
       filter(chapters == input$chapters)
     if (length(input$characters) > 0) {
-      t <- t %>% filter(name %in% c(input$characters, NA))
+      t <- t %>% filter(character_name %in% c(input$characters, NA))
     }
     if (length(input$language) > 0) {
-      t <- t %>% filter(language %in% c(input$language, NA))
+      t <- t %>% filter(language_name %in% c(input$language, NA))
     }
     if (length(input$category) > 0) {
       t <- t %>% filter(category_name %in% c(input$category, NA))
@@ -58,7 +60,7 @@ shinyServer(function(input, output) {
     if (input$rating != "All") {
       t <- t %>% filter(rating == input$rating)
     }
-    t <- t %>% group_by(story_id, title, summary, language, rating, hits, chapters, category_name) %>%
+    t <- t %>% group_by(story_id, title, summary, language_name, rating, hits, chapters, category_name) %>%
       summarise() %>%
       data.frame()
     if (nrow(t) > 0) {
@@ -75,17 +77,17 @@ shinyServer(function(input, output) {
   output$characterSelector <- renderUI({
     characterNames <- tbl.contains_character %>%
       left_join(tbl.characters, by=c("character"="character_id")) %>%
-      group_by(name) %>%
+      group_by(character_name) %>%
       summarise( appearances = n() ) %>%
       top_n(numberOfCharactersShown, appearances) %>%
       data.frame()
     selectInput("characters", "Characters",
-                choices=as.list(characterNames$name), multiple=TRUE)
+                choices=as.list(characterNames$character_name), multiple=TRUE)
   })
 
   output$languageSelector <- renderUI({
-    languages <- tbl.stories %>%
-      select(language) %>%
+    languages <- tbl.language %>%
+      select(language_name) %>%
       data.frame()
     properlyEncodedLanguages <- as.list(unique(convert_to_encoding(languages)))
     selectInput("language", "Language",
