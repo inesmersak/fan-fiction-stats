@@ -442,7 +442,7 @@ class Database:
                 print(e)
         else:  # granting admin permissions to a user
             try:
-                cursor.execute("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", [(AsIs(self.db_name), AsIs(grantee))])
+                cursor.execute("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", [AsIs(self.db_name), AsIs(grantee)])
                 cursor.execute("GRANT ALL PRIVILEGES ON SCHEMA public TO %s", [AsIs(grantee), ])
                 cursor.execute("GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO %s", [AsIs(grantee), ])
             except psycopg2.InternalError as e:
