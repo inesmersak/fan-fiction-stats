@@ -2,6 +2,8 @@ library(shiny)
 library(dplyr)
 library(RPostgreSQL)
 library(plotrix)
+library(ggplot2)
+library(gridExtra)
 
 source("auth.R")
 source("auxiliaryFunctions.R")
@@ -96,34 +98,43 @@ shinyServer(function(input, output) {
 
   # RENDER PLOTS
 
-  storyTable <- tbl.stories %>% select(language) %>% data.frame()
 
   output$languagePlot <- renderPlot({
-    plotData <- storyTable %>% convert_to_encoding() %>% table()
-    lbls <- paste(names(plotData), "\n", plotData, sep="")
+    plotData <- left_join(tbl.stories, tbl.language, by=c("language"="language_id")) %>%
+      select(language_name) %>% filter(language_name != "English") %>% data.frame()
 
-    barplot(plotData, names.arg = lbls, xlab = "Language", ylab = "Number of stories", col = "limegreen",
-            main = "Language in fan fictions")
-
+    ggplot(data=plotData, aes(x=language_name, fill=language_name)) +
+      geom_bar() +
+      scale_x_discrete(breaks=NULL)
   })
 
 
   output$ratingsPlot <- renderPlot({
-    plotData <- tbl.stories %>% select(rating) %>% data.frame() %>% table()
-    lbls <- paste(names(plotData), "\n", plotData, sep="")
+    plotData <- tbl.stories %>% select(rating) %>% data.frame()
 
-    pie3D(plotData, labels = lbls, explode = 0.1, main = "Ratings")
+    ratingsPlot <- ggplot(data=plotData, aes(x=rating,  fill=rating)) +
+      geom_bar() +
+      guides(fill=FALSE)
+
+    plotData <- left_join(tbl.stories, left_join(tbl.category, tbl.is_in_category, by=c("category_id"="category")),
+                          by=c("story_id"="story")) %>% select(category_name) %>% data.frame()
+
+    categoryPlot <- ggplot(data=plotData, aes(x=category_name,  fill=category_name)) +
+      geom_bar() +
+      guides(fill=FALSE)
+
+    grid.arrange(ratingsPlot, categoryPlot, ncol=2)
   })
 
   output$wordsPlot <- renderPlot({
-    plotData <- tbl.stories %>% arrange(words) %>% select(words) %>% data.frame()
-    plotData <- c(plotData[,1])
-    bins <- seq(min(plotData), max(plotData), length.out = 100)
-    # plotData <- c(10,20,25,37,100,1921,543,29,46,786,1123)
-    numberofStories <- 2000
+    storiesData <- tbl.stories %>% select(words) %>% data.frame()
+    wordsMean <- mean(storiesData$words)
+    plotData <- tbl.stories %>% arrange(words) %>% filter(words <= wordsMean)%>% data.frame()
 
-    # draw the histogram with the specified number of bins
-    hist(plotData, ylim=c(0,2000), breaks=10, xlim=c(min(plotData), 10000), col = 'darkgray', border = 'white')
+    ggplot(plotData, aes(x = words)) +
+      geom_histogram(colour="white", fill="#00BF7D", binwidth=250) +
+      scale_x_continuous(breaks=seq(0, wordsMean, 250)) +
+      scale_y_continuous(breaks=seq(0, nrow(storiesData), 1000))
   })
 
 })
