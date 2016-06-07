@@ -2,6 +2,7 @@ import psycopg2
 import psycopg2.extensions
 from psycopg2.extensions import AsIs
 from data_retrieval_parsing import languages
+import datetime
 
 
 class Database:
@@ -125,6 +126,10 @@ class Database:
         f = open('type_errors.log', 'w', encoding='utf-8')
         g = open('internal_error.log', 'w', encoding='utf-8')
         h = open('integrity_error.log', 'w', encoding='utf-8')
+
+        print(datetime.datetime, file=f, end="\n---------------------------------------\n")
+        print(datetime.datetime, file=g, end="\n---------------------------------------\n")
+        print(datetime.datetime, file=h, end="\n---------------------------------------\n")
 
         def insert_character(character):
             try:
@@ -328,6 +333,8 @@ class Database:
 
         cursor.close()
         f.close()
+        g.close()
+        h.close()
 
     def insert_author(self, author):
         cursor = self.conn.cursor()
