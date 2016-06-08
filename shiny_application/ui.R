@@ -27,8 +27,8 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
           choices = CATEGORIES, multiple = TRUE),
         numericInput("chapters",
           label = "Number of chapters",
-          value = 1,
-          min = 1
+          value = 0,
+          min = 0
         ),
         sliderInput("minViews",
                     "Minimal number of views:",
@@ -48,19 +48,33 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
 
   # STATISTICS TAB #
   tabPanel("Statistics",
-    sidebarLayout(
-      sidebarPanel(width=3,
-        selectInput("property", label = "Compare by",
-                    choices = list("Author" = 1, "Language" = 2, "Number of words" = 3),
-                    selected = 1)
-      ),
+    # sidebarLayout(
+    #   sidebarPanel(width=2,
+    #     selectInput("property", label = "Compare by",
+    #                 choices = list("Author" = 1, "Language" = 2, "Number of words" = 3),
+    #                 selected = 1)
+    #   ),
 
-      mainPanel(
+    fluidRow(
+      column(10, offset=1,
+        h2("Language"),
+        p("While Archive of Our Own supports 64 languages, not all of them are used in the Harry Potter fandom.
+          The graph underneath shows the number of stories written in each language, save for English, which is
+          by far the most popular."),
+        p(htmlOutput("mostUsedLanguage"),
+        htmlOutput("leastUsedLanguage")),
+        br(),
         plotOutput("languagePlot"),
+        h2("Popular characters"),
+        plotOutput("charactersPlot"),
+        br(),
+        h2("Other statistics"),
         plotOutput("ratingsPlot"),
+        br(),
         plotOutput("wordsPlot")
       )
     )
+    # )
   ),
 
 
@@ -71,7 +85,7 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
         tabPanel("Source and tools",
           a("Archive of Our Own", href="http://archiveofourown.org/", target="_blank")),
         tabPanel("Authors",
-                 "We are cool.")
+                 "Matic Oskar Hajšen, Ines Meršak.")
       )
     )
   )
