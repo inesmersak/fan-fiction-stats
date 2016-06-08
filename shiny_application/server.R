@@ -62,8 +62,9 @@ shinyServer(function(input, output) {
     if (input$rating != "All") {
       t <- t %>% filter(rating == input$rating)
     }
-    t <- t %>% group_by(story_id, title, summary, language_name, rating, hits, chapters, category_name) %>%
-      summarise() %>%
+    t <- t %>% group_by(story_id, title, summary, language_name, rating, hits, chapters) %>%
+      summarise(categories=paste(distinct(category_name), collapse=", "),
+                characters=paste(character_name, collapse=", ")) %>%
       data.frame()
     if (nrow(t) > 0) {
       Encoding(t$title) <- "UTF-8"
@@ -88,9 +89,8 @@ shinyServer(function(input, output) {
   })
 
   output$languageSelector <- renderUI({
-    languages <- tbl.language %>%
-      select(language_name) %>%
-      data.frame()
+    languages <- left_join(tbl.stories, tbl.language, by=c("language"="language_id")) %>%
+      select(language_name) %>% data.frame() %>% arrange(language_name)
     properlyEncodedLanguages <- as.list(unique(convert_to_encoding(languages)))
     selectInput("language", "Language",
                 choices=properlyEncodedLanguages, multiple=TRUE)
