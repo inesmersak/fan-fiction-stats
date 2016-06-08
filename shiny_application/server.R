@@ -5,7 +5,7 @@ library(plotrix)
 library(ggplot2)
 library(gridExtra)
 
-source("auth.R")
+source("auth_public.R")
 source("auxiliaryFunctions.R")
 
 shinyServer(function(input, output) {
