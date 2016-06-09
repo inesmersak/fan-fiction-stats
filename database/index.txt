@@ -1,0 +1,26 @@
+TABLE story:
+language
+hits
+rating
+words
+chapters
+
+TABLE language:
+language_name
+
+TABLE category:
+category_name
+
+TABLE character:
+character_name
+
+CREATE INDEX ON story (language);
+CREATE INDEX ON story (hits DESC NULLS LAST);
+CREATE INDEX ON story (rating);
+CREATE INDEX ON story (words);
+
+CREATE INDEX ON language (language_name);
+
+CREATE INDEX ON category (category_name);
+
+CREATE INDEX ON character (character_name);
