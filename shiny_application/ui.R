@@ -8,6 +8,7 @@ RATINGS <- c("All",
              "Not Rated")
 
 CATEGORIES <- c("M/M", "F/M", "Gen", "Multi", "F/F", "Other")
+CATEGORIES <- setNames(seq(1,length(CATEGORIES)), CATEGORIES)
 
 
 shinyUI(navbarPage("Harry Potter Fan Fiction",
@@ -17,7 +18,7 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
   # BROWSE TAB #
   tabPanel("Browse stories",
     sidebarLayout(
-      sidebarPanel(width=3,
+      sidebarPanel(width=2,
         uiOutput("characterSelector"),
         uiOutput("languageSelector"),
         textOutput("someText"),
@@ -37,8 +38,11 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
                     value = 1000)
       ),
 
-      mainPanel(
-        dataTableOutput("stories")
+      mainPanel(width=10,
+        fluidRow(
+          column(6, dataTableOutput("stories")),
+          column(4, h2("Blabla tukaj pride zgodba."))
+        )
       )
 
 
