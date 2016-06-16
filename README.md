@@ -11,5 +11,9 @@ Python 3.4 and library [`requests`](http://docs.python-requests.org/en/master/) 
 
 The diagram was created with [Dia](http://dia-installer.de/).
 
+## Requirements ##
+
+In order for the shiny application to work correctly, the developer version of the package `DT` must be installed using the instructions on [this](https://github.com/rstudio/DT) GitHub repository.
+
 ### Authors ###
 Matic Oskar Hajšen, Ines Meršak
