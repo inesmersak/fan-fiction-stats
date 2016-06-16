@@ -1,4 +1,5 @@
 library(shiny)
+library(DT)
 
 RATINGS <- c("All",
              "Teen And Up Audiences",
@@ -15,7 +16,7 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
   theme="bootstrap-sandstone.css",
   inverse = TRUE,
 
-  # BROWSE TAB #
+  # BROWSE STORIES TAB #
   tabPanel("Browse stories",
     sidebarLayout(
       sidebarPanel(width=2,
@@ -31,6 +32,7 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
           value = 0,
           min = 0
         ),
+        checkboxInput("completed", label="Completed only", FALSE),
         sliderInput("minViews",
                     "Minimal number of views:",
                     min = 0,
@@ -40,8 +42,8 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
 
       mainPanel(width=10,
         fluidRow(
-          column(6, dataTableOutput("stories")),
-          column(4, h2("Blabla tukaj pride zgodba."))
+          column(6, DT::dataTableOutput("stories")),
+          column(6, uiOutput("story"))
         )
       )
 
@@ -49,6 +51,21 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
     )
   ),
 
+  # BROWSE AUTHORS TAB #
+  tabPanel("Search by author",
+    sidebarLayout(
+     sidebarPanel(width=4,
+                  uiOutput("authorSelector")
+     ),
+
+      mainPanel(width=10,
+        fluidRow(
+         column(4, DT::dataTableOutput("authorStories")),
+         column(6, uiOutput("authorStory"))
+        )
+      )
+    )
+  ),
 
   # STATISTICS TAB #
   tabPanel("Statistics",

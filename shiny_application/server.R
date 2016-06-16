@@ -16,7 +16,7 @@ shinyServer(function(input, output) {
                        user = user, password = password)
 
 
-  # RENDER TABLES
+  # RENDER STORIES
 
   # output$authors <- renderTable({
   #   # filter and order table data
@@ -29,8 +29,8 @@ shinyServer(function(input, output) {
   #   t
   # })
 
-  output$stories <- DT::renderDataTable({
-    query <-"SELECT DISTINCT title, language_name, hits, story_id
+  storyData <- reactive({
+    query <-"SELECT DISTINCT title, language_name, chapters, completed, hits, story_id
             FROM story
             JOIN contains_character ON story_id=story
             JOIN is_in_category ON story_id=is_in_category.story
@@ -48,7 +48,9 @@ shinyServer(function(input, output) {
                      ")")
     }
     if (length(input$language) > 0) {
-      query <- paste0(query, " AND language=", input$language)
+      query <- paste0(query, " AND language IN (",
+                      paste(c(input$language), collapse=", "),
+                      ")")
     }
     if (length(input$category) > 0) {
       query <- paste0(query, " AND category IN (",
@@ -58,8 +60,11 @@ shinyServer(function(input, output) {
     if (input$rating != "All") {
       query <- paste0(query, " AND rating='", input$rating, "'")
     }
+    if (input$completed) {
+      query <- paste(query, "AND completed=true")
+    }
 
-    query <-paste(query, "GROUP BY story_id, title, language_name, hits
+    query <-paste(query, "GROUP BY story_id, title, language_name, chapters, completed, hits
                           ORDER BY hits DESC, title ASC")
 
     t <- dbGetQuery(conn, query) %>% data.frame()
@@ -69,8 +74,64 @@ shinyServer(function(input, output) {
       t <- convert_to_encoding(t)
     }
     t
-  }, selection="single")
+  })
 
+  output$stories <- DT::renderDataTable({
+    if (nrow(storyData()) > 0) {
+      select(storyData(), title, language_name, chapters, completed)
+    }
+  }
+  , options = list(
+    pageLength = 10,
+    lengthMenu = c(10, 15, 20)
+    ),
+  selection="single")
+
+
+  output$story <- renderUI({
+    if (nrow(storyData()) > 0 && length(input$stories_rows_selected) > 0) {
+      storyRow <- storyData()[input$stories_rows_selected,]
+      storyInfo <- dbGetQuery(conn,
+                              build_sql("SELECT story_id, title, username, summary, language_name, rating, hits,
+                                        kudos, comments, words, chapters, completed, date_published,
+                                        string_agg(DISTINCT fandom_name, \', \') AS fandoms,
+                                        string_agg(DISTINCT warning_description, \', \') AS warnings,
+                                        string_agg(DISTINCT character_name, \', \') AS characters,
+                                        string_agg(DISTINCT category_name, \', \') AS categories FROM story
+                                        JOIN author ON written_by=author_id
+                                        JOIN contains_character ON story_id=story
+                                        JOIN character ON character=character_id
+                                        JOIN is_in_category ON story_id=is_in_category.story
+                                        JOIN category ON category=category_id
+                                        JOIN language ON language=language_id
+                                        JOIN contains_fandom ON story_id=contains_fandom.story
+                                        JOIN fandom ON fandom=fandom_id
+                                        JOIN has_warning ON story_id=has_warning.story
+                                        JOIN warning ON warning=warning_id
+                                        WHERE story_id=", storyRow$story_id,
+                                        " GROUP BY story_id, title, username, summary, language_name, date_published,
+                                        rating, hits, kudos, comments, words, chapters, completed")) %>% data.frame()
+      title <- h2(storyInfo$title)
+      author <- h4("Written by:", storyInfo$username)
+      mainInfo <- p(strong("Date published: "), format(storyInfo$date_published, format="%d %B, %Y"), br(),
+                    strong("Language: "), storyInfo$language_name, br(),
+                    strong("Rating:"), storyInfo$rating)
+      warnings <- p(strong("Warnings"), br(), storyInfo$warnings)
+      categories <- p(strong("Categories"), br(), storyInfo$categories)
+      link <- a("Click here to read the story", href=paste0("http://archiveofourown.org/works/", storyInfo$story_id), target="_blank")
+      summary <- p(strong("Summary"), br(), storyInfo$summary, br(), link)
+      statistics <- p(strong("Statistics"), br(),
+                      "Words: ", storyInfo$words, br(),
+                      "Chapters: ", storyInfo$chapters, br(),
+                      "Views: ", storyInfo$hits, br(),
+                      "Favourites: ", storyInfo$kudos, br(),
+                      "Comments: ", storyInfo$comments, br())
+
+      characters <- p(strong("Characters"), br(), storyInfo$characters)
+      fandoms <- p(strong("Fandoms"), br(), storyInfo$fandoms)
+      HTML(paste(title, author, mainInfo, warnings, categories, summary, characters, fandoms, statistics))
+    }
+  })
 
   # RENDER SELECTORS
 
@@ -102,6 +163,15 @@ shinyServer(function(input, output) {
                 choices=setNames(langIds, langNames), multiple=TRUE)
   })
 
+  output$authorSelector <- renderUI({
+    authors <- dbGetQuery(conn,
+      "SELECT author_id, username FROM author ORDER BY username ASC") %>% data.frame()
+    authorNames <- as.vector(authors$username)
+    authorIds <- as.vector(authors$author_id)
+    selectInput("author", "Author",
+                choices=setNames(authorIds, authorNames), multiple=FALSE)
+  })
+
 
   # # RENDER STATISTICS
   #
@@ -123,8 +193,7 @@ shinyServer(function(input, output) {
   # })
 
 
-  # # RENDER PLOTS
-
+  # RENDER PLOTS
 
   output$languagePlot <- renderPlot({
     plotData <- dbGetQuery(conn,
@@ -146,11 +215,13 @@ shinyServer(function(input, output) {
         "SELECT rating, COUNT(*) AS count_rating
         FROM story
         GROUP BY rating") %>% data.frame()
-
-    ratingsPlot <- ggplot(data=plotData,
-                          aes(x=rating, y=count_rating, fill=rating)) +
-      geom_bar(stat="identity") +
-      guides(fill=FALSE)
+    ratingsPlot <- ggplot(plotData, aes(x=factor(1), y = count_rating, fill = rating)) +
+      geom_bar(stat = "identity", width = 1) + coord_polar(theta = "y") +
+      ylab("")
+    # ratingsPlot <- ggplot(data=plotData,
+    #                       aes(x=factor(1), y=count_rating, fill=rating)) +
+    #   geom_bar(stat="identity") +
+    #   guides(fill=FALSE)
 
     plotData <- dbGetQuery(conn,
        "SELECT category_name, COUNT(*) AS count_category FROM story
