@@ -9,25 +9,17 @@ library(DT)
 source("auth_public.R")
 source("auxiliaryFunctions.R")
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
   # connect to database
   drv <- dbDriver("PostgreSQL")
   conn <- dbConnect(drv, dbname = db, host = host,
                        user = user, password = password)
 
+  cancel.onSessionEnded <- session$onSessionEnded(function() {
+    dbDisconnect(conn)
+  })
 
   # RENDER STORIES
-
-  # output$authors <- renderTable({
-  #   # filter and order table data
-  #   t <- tbl.authors %>% filter(author_id > input$min) %>%
-  #     arrange(username) %>% data.frame()
-  #   t$date_joined <- as.character(t$date_joined)
-  #   t$birthday <- as.character(t$birthday)
-  #
-  #   # return the table
-  #   t
-  # })
 
   storyData <- reactive({
     query <-"SELECT DISTINCT title, language_name, chapters, completed, hits, story_id
@@ -130,6 +122,44 @@ shinyServer(function(input, output) {
       characters <- p(strong("Characters"), br(), storyInfo$characters)
       fandoms <- p(strong("Fandoms"), br(), storyInfo$fandoms)
       HTML(paste(title, author, mainInfo, warnings, categories, summary, characters, fandoms, statistics))
+    }
+  })
+
+  # RENDER AUTHORS
+
+  output$authors <- renderTable({
+    # filter and order table data
+    t <- tbl.authors %>% filter(author_id > input$min) %>%
+      arrange(username) %>% data.frame()
+    t$date_joined <- as.character(t$date_joined)
+    t$birthday <- as.character(t$birthday)
+
+    # return the table
+    t
+  })
+
+  output$authorStories <- renderUI({
+    if (length(input$author) > 0) {
+      info <- dbGetQuery(conn,
+          build_sql("SELECT * FROM author
+                   WHERE author_id=", input$author)) %>% data.frame()
+      username <- h2(info$username)
+      date_joined <- HTML(paste(strong("Date joined:"), format(info$date_joined, format="%d %B, %Y"), br()))
+      location <- ""
+      if (!is.na(info$location)) {
+        location <- HTML(paste(strong("Location:"), info$location, br()))
+      }
+      birthday <- ""
+      if (!is.na(info$birthday)) {
+        birthday <- HTML(paste(strong("Birthday:"), format(info$birthday, format="%d %B, %Y"), br()))
+      }
+      stories <- dbGetQuery(conn,
+          build_sql("SELECT * FROM
+                    story WHERE written_by=", input$author,
+                    " GROUP BY story_id")) %>% data.frame()
+      numberOfStories <- h2("Stories written: ", nrow(stories))
+      HTML(paste(username, p(date_joined, birthday, location),
+                 numberOfStories, HTML(paste(c(stories$title), collapse=", "))))
     }
   })
 

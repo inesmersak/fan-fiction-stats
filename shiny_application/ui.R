@@ -58,10 +58,9 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
                   uiOutput("authorSelector")
      ),
 
-      mainPanel(width=10,
+      mainPanel(width=8,
         fluidRow(
-         column(4, DT::dataTableOutput("authorStories")),
-         column(6, uiOutput("authorStory"))
+         column(8, uiOutput("authorStories"))
         )
       )
     )
