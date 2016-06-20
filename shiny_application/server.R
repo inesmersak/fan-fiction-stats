@@ -15,6 +15,8 @@ shinyServer(function(input, output, session) {
   conn <- dbConnect(drv, dbname = db, host = host,
                        user = user, password = password)
 
+  dbGetQuery(conn, "SET CLIENT_ENCODING TO 'utf8'; SET NAMES 'utf8'")
+
   cancel.onSessionEnded <- session$onSessionEnded(function() {
     dbDisconnect(conn)
   })
@@ -30,10 +32,9 @@ shinyServer(function(input, output, session) {
             WHERE"
     query <- paste(query, "hits >=", input$minViews)
     # AND language_name='Spanish' AND character IN (1,2,7)
+    query <- paste0(query, " AND chapters>=", input$chapters[1])
+    query <- paste0(query, " AND chapters<=", input$chapters[2])
 
-    if (input$chapters > 0) {
-      query <- paste0(query, " AND chapters=", input$chapters)
-    }
     if (length(input$characters) > 0) {
       query <- paste0(query, "AND character IN (",
                      paste(c(input$characters), collapse=", "),
@@ -60,24 +61,27 @@ shinyServer(function(input, output, session) {
                           ORDER BY hits DESC, title ASC")
 
     t <- dbGetQuery(conn, query) %>% data.frame()
-
     if (nrow(t) > 0) {
+      # t$summary <- as.character(t$summary)
       Encoding(t$title) <- "UTF-8"
-      t <- convert_to_encoding(t)
+      # Encoding(t$summary) <- "UTF-8"
     }
     t
   })
 
   output$stories <- DT::renderDataTable({
     if (nrow(storyData()) > 0) {
-      select(storyData(), title, language_name, chapters, completed)
+      datatable(select(storyData(), title, language_name, chapters, completed),
+                options = list(
+                  pageLength = 10,
+                  lengthMenu = c(10, 15, 20)),
+                selection="single"
+      ) %>% formatStyle(
+        'title',
+        target = 'row',
+        cursor = 'pointer')
     }
-  }
-  , options = list(
-    pageLength = 10,
-    lengthMenu = c(10, 15, 20)
-    ),
-  selection="single")
+  })
 
 
   output$story <- renderUI({
@@ -103,6 +107,11 @@ shinyServer(function(input, output, session) {
                                         WHERE story_id=", storyRow$story_id,
                                         " GROUP BY story_id, title, username, summary, language_name, date_published,
                                         rating, hits, kudos, comments, words, chapters, completed")) %>% data.frame()
+      Encoding(storyInfo$title) <- "UTF-8"
+      Encoding(storyInfo$summary) <- "UTF-8"
+      Encoding(storyInfo$characters) <- "UTF-8"
+      Encoding(storyInfo$fandoms) <- "UTF-8"
+      Encoding(storyInfo$username) <- "UTF-8"
       title <- h2(storyInfo$title)
       author <- h4("Written by:", storyInfo$username)
       mainInfo <- p(strong("Date published: "), format(storyInfo$date_published, format="%d %B, %Y"), br(),
@@ -127,25 +136,18 @@ shinyServer(function(input, output, session) {
 
   # RENDER AUTHORS
 
-  output$authors <- renderTable({
-    # filter and order table data
-    t <- tbl.authors %>% filter(author_id > input$min) %>%
-      arrange(username) %>% data.frame()
-    t$date_joined <- as.character(t$date_joined)
-    t$birthday <- as.character(t$birthday)
-
-    # return the table
-    t
-  })
-
   storiesToHTML <- function(authorStories, n) {
     n=min(nrow(authorStories),n)
     stories <- c(n)
     for (i in 1:n) {
       title <- h4(authorStories$title[i])
       link <- a("Click here to read the story", href=paste0("http://archiveofourown.org/works/", authorStories$story_id[i]), target="_blank")
-      summary <- p(authorStories$summary[i], br(), link)
-      stories[i] <- HTML(paste(title, summary))
+      summary <- ""
+      if (!is.na(authorStories$summary[i])) {
+        summary <- authorStories$summary[i]
+      }
+      storysum <- p(summary, br(), link)
+      stories[i] <- HTML(paste(title, storysum))
     }
     storiesHTML <- HTML(paste0(c(stories)))
     return(storiesHTML)
@@ -156,6 +158,8 @@ shinyServer(function(input, output, session) {
       info <- dbGetQuery(conn,
           build_sql("SELECT * FROM author
                    WHERE author_id=", input$author)) %>% data.frame()
+      Encoding(info$username) <- "UTF-8"
+      Encoding(info$location) <- "UTF-8"
       username <- h2(info$username)
       date_joined <- HTML(paste(strong("Date joined:"), format(info$date_joined, format="%d %B, %Y"), br()))
       location <- ""
@@ -170,6 +174,8 @@ shinyServer(function(input, output, session) {
           build_sql("SELECT * FROM
                     story WHERE written_by=", input$author,
                     " GROUP BY story_id ORDER BY hits DESC, title ASC")) %>% data.frame()
+      Encoding(stories$title) <- "UTF-8"
+      Encoding(stories$summary) <- "UTF-8"
       numberOfStories <- h2("Stories written: ", nrow(stories))
       HTML(paste(username, p(date_joined, birthday, location),
                  numberOfStories,
@@ -190,6 +196,7 @@ shinyServer(function(input, output, session) {
        GROUP BY character_name, character_id
        ORDER BY appearances DESC
        LIMIT ", numberOfCharactersShown)) %>% data.frame()
+    Encoding(characterNames$character_name) <- "UTF-8"
     charNames <- as.vector(characterNames$character_name)
     charIds <- as.vector(characterNames$character_id)
     selectInput("characters", "Characters",
@@ -212,6 +219,7 @@ shinyServer(function(input, output, session) {
   output$authorSelector <- renderUI({
     authors <- dbGetQuery(conn,
       "SELECT author_id, username FROM author ORDER BY username ASC") %>% data.frame()
+    Encoding(authors$username)<- "UTF-8"
     authorNames <- as.vector(authors$username)
     authorIds <- as.vector(authors$author_id)
     selectInput("author", "Author",
