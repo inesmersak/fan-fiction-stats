@@ -54,11 +54,17 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
   # BROWSE AUTHORS TAB #
   tabPanel("Search by author",
     sidebarLayout(
-     sidebarPanel(width=4,
-                  uiOutput("authorSelector")
+     sidebarPanel(width=3,
+                  uiOutput("authorSelector"),
+                  numericInput("authorStoriesSelector",
+                               label = "Number of author's stories to show",
+                               value = 7,
+                               min = 1
+                  )
+
      ),
 
-      mainPanel(width=8,
+      mainPanel(width=9,
         fluidRow(
          column(8, uiOutput("authorStories"))
         )

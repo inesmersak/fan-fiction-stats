@@ -138,6 +138,19 @@ shinyServer(function(input, output, session) {
     t
   })
 
+  storiesToHTML <- function(authorStories, n) {
+    n=min(nrow(authorStories),n)
+    stories <- c(n)
+    for (i in 1:n) {
+      title <- h4(authorStories$title[i])
+      link <- a("Click here to read the story", href=paste0("http://archiveofourown.org/works/", authorStories$story_id[i]), target="_blank")
+      summary <- p(authorStories$summary[i], br(), link)
+      stories[i] <- HTML(paste(title, summary))
+    }
+    storiesHTML <- HTML(paste0(c(stories)))
+    return(storiesHTML)
+  }
+
   output$authorStories <- renderUI({
     if (length(input$author) > 0) {
       info <- dbGetQuery(conn,
@@ -156,10 +169,13 @@ shinyServer(function(input, output, session) {
       stories <- dbGetQuery(conn,
           build_sql("SELECT * FROM
                     story WHERE written_by=", input$author,
-                    " GROUP BY story_id")) %>% data.frame()
+                    " GROUP BY story_id ORDER BY hits DESC, title ASC")) %>% data.frame()
       numberOfStories <- h2("Stories written: ", nrow(stories))
       HTML(paste(username, p(date_joined, birthday, location),
-                 numberOfStories, HTML(paste(c(stories$title), collapse=", "))))
+                 numberOfStories,
+                 #HTML(paste(c(stories$title), collapse=", "))
+                 storiesToHTML(stories, input$authorStoriesSelector)
+                 ))
     }
   })
 
@@ -199,28 +215,27 @@ shinyServer(function(input, output, session) {
     authorNames <- as.vector(authors$username)
     authorIds <- as.vector(authors$author_id)
     selectInput("author", "Author",
-                choices=setNames(authorIds, authorNames), multiple=FALSE)
+                choices=setNames(authorIds, authorNames), multiple=FALSE, size=30, selectize=FALSE)
   })
 
 
-  # # RENDER STATISTICS
-  #
-  # languagesUsed <- left_join(tbl.stories, tbl.language, by=c("language"="language_id")) %>%
-  #   group_by(language_name) %>% summarise(stories=n())
-  # output$mostUsedLanguage <- renderUI({
-  #   mostUsed <- languagesUsed %>% top_n(1, stories) %>%
-  #     select(language_name, stories) %>% data.frame()
-  #   mostUsedStr <- paste("Most used language: ", mostUsed$language_name, ", used in ",
-  #                        mostUsed$stories, " fan fictions.", sep="")
-  #   HTML(mostUsedStr, end="<br/>")
-  # })
-  # output$leastUsedLanguage <- renderUI({
-  #   leastUsed <- languagesUsed %>% top_n(1, -stories) %>%
-  #     select(language_name, stories) %>% data.frame()
-  #   leastUsedStr <- paste("Least used language: ", leastUsed$language_name, ", used in ",
-  #                         leastUsed$stories, " fan fictions.", sep="")
-  #   HTML(paste(leastUsedStr,"<br/>"))
-  # })
+  # RENDER STATISTICS
+  languagesUsed <- dbGetQuery(conn, "SELECT language_name, COUNT(*) AS language_count
+                              FROM story LEFT JOIN language ON language=language_id
+                              GROUP BY language_name ORDER BY language_count DESC") %>% data.frame()
+  output$mostUsedLanguage <- renderUI({
+    mostUsed <- languagesUsed %>% top_n(1, language_count) %>%
+      select(language_name, language_count)
+    mostUsedStr <- paste("Most used language: ", mostUsed$language_name, ", used in ",
+                         mostUsed$language_count, " fan fictions.", sep="")
+    HTML(mostUsedStr, end="<br/>")
+  })
+  output$leastUsedLanguage <- renderUI({
+    leastUsed <- languagesUsed %>% top_n(1, -language_count) %>% select(language_name, language_count)
+    leastUsedStr <- paste("Least used language: ", leastUsed$language_name, ", used in ",
+                          leastUsed$language_count, " fan fiction.", sep="")
+    HTML(paste(leastUsedStr,"<br/>"))
+  })
 
 
   # RENDER PLOTS
