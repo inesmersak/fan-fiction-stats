@@ -87,24 +87,35 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
     #   ),
 
     fluidRow(
-      column(10, offset=1,
+      column(8, offset=2,
         h2("Language"),
         p("While Archive of Our Own supports 64 languages, not all of them are used in the Harry Potter fandom.
           The graph underneath shows the number of stories written in each language, save for English, which is
           by far the most popular."),
-        p(htmlOutput("mostUsedLanguage"),
-        htmlOutput("leastUsedLanguage")),
+        p(uiOutput("mostUsedLanguage"),
+        uiOutput("leastUsedLanguage")),
         br(),
         plotOutput("languagePlot"),
         h2("Popular characters"),
         plotOutput("charactersPlot"),
         br(),
-        h2("Other statistics"),
-        plotOutput("ratingsPlot"),
-        br(),
-        plotOutput("wordsPlot")
+        h2("Other statistics")
       )
+    ),
+
+    fluidRow(
+      column(2, offset=2,
+             uiOutput("databaseStatistics")),
+      column(6,
+             plotOutput("ratingsPlot"))
+    ),
+
+    fluidRow(
+      column(8, offset=2,
+             plotOutput("catWarnPlot"),
+             plotOutput("wordsPlot"))
     )
+
     # )
   ),
 

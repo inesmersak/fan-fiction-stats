@@ -71,13 +71,15 @@ shinyServer(function(input, output, session) {
 
   output$stories <- DT::renderDataTable({
     if (nrow(storyData()) > 0) {
-      datatable(select(storyData(), title, language_name, chapters, completed),
+      data <- select(storyData(), title, language_name, completed, chapters)
+      names(data) <- c("Title", "Language", "Completed?", "# of chapters")
+      datatable(data,
                 options = list(
                   pageLength = 10,
                   lengthMenu = c(10, 15, 20)),
                 selection="single"
       ) %>% formatStyle(
-        'title',
+        'Title',
         target = 'row',
         cursor = 'pointer')
     }
@@ -245,6 +247,20 @@ shinyServer(function(input, output, session) {
     HTML(paste(leastUsedStr,"<br/>"))
   })
 
+  output$databaseStatistics <- renderUI({
+    stories <- dbGetQuery(conn, "SELECT * FROM story") %>% data.frame() %>% nrow()
+    authors <- dbGetQuery(conn, "SELECT * FROM author") %>% data.frame() %>% nrow()
+    characters <- dbGetQuery(conn, "SELECT * FROM character") %>% data.frame() %>% nrow()
+    relationships <- dbGetQuery(conn, "SELECT DISTINCT * FROM relationship") %>% data.frame() %>% nrow()
+    fandoms <- dbGetQuery(conn, "SELECT * FROM fandom") %>% data.frame() %>% nrow()
+    title <- h4("Database statistics")
+    stats <- p("Number of stories: ", stories, br(),
+               "Number of authors: ", authors, br(),
+               "Number of characters: ", characters, br(),
+               "Number of relationships: ", relationships, br(),
+               "Number of fandoms:", fandoms, br())
+    HTML(paste(title, stats))
+  })
 
   # RENDER PLOTS
 
@@ -265,16 +281,28 @@ shinyServer(function(input, output, session) {
 
   output$ratingsPlot <- renderPlot({
     plotData <- dbGetQuery(conn,
-        "SELECT rating, COUNT(*) AS count_rating
-        FROM story
-        GROUP BY rating") %>% data.frame()
+                           "SELECT rating, COUNT(*) AS count_rating
+                           FROM story
+                           GROUP BY rating") %>% data.frame()
     ratingsPlot <- ggplot(plotData, aes(x=factor(1), y = count_rating, fill = rating)) +
       geom_bar(stat = "identity", width = 1) + coord_polar(theta = "y") +
-      ylab("")
+      ylab("") # + theme(legend.position="bottom")
     # ratingsPlot <- ggplot(data=plotData,
     #                       aes(x=factor(1), y=count_rating, fill=rating)) +
     #   geom_bar(stat="identity") +
     #   guides(fill=FALSE)
+    ratingsPlot
+  })
+
+  output$catWarnPlot <- renderPlot({
+    plotData <- dbGetQuery(conn,
+        "SELECT warning_description, COUNT(*) AS count_warning
+        FROM has_warning JOIN warning ON warning=warning_id
+        GROUP BY warning_description") %>% data.frame()
+    warningsPlot <- ggplot(plotData, aes(x=warning_description, y = count_warning, fill = warning_description)) +
+      geom_bar(stat = "identity")+
+      scale_x_discrete(breaks=NULL) #+
+      #theme(legend.position="bottom")
 
     plotData <- dbGetQuery(conn,
        "SELECT category_name, COUNT(*) AS count_category FROM story
@@ -287,7 +315,7 @@ shinyServer(function(input, output, session) {
       geom_bar(stat="identity") +
       guides(fill=FALSE)
 
-    grid.arrange(ratingsPlot, categoryPlot, ncol=2)
+    grid.arrange(categoryPlot, warningsPlot, ncol=2)
   })
 
   output$wordsPlot <- renderPlot({
