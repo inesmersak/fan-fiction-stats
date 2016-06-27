@@ -109,6 +109,15 @@ shinyServer(function(input, output, session) {
                                         WHERE story_id=", storyRow$story_id,
                                         " GROUP BY story_id, title, username, summary, language_name, date_published,
                                         rating, hits, kudos, comments, words, chapters, completed")) %>% data.frame()
+      relationshipInfo <- dbGetQuery(conn,
+                                     build_sql("SELECT story, string_agg(DISTINCT relationship, \', \') AS relationships FROM
+                                              (SELECT story, c1.character_name || \'/\' || c2.character_name AS relationship
+                                              FROM contains_relationship
+                                              LEFT JOIN character c1 ON person_1=c1.character_id
+                                              LEFT JOIN character c2 ON person_2=c2.character_id
+                                              WHERE story=", storyRow$story_id,
+                                              " ) AS rl
+                                              GROUP BY story")) %>% data.frame()
       Encoding(storyInfo$title) <- "UTF-8"
       Encoding(storyInfo$summary) <- "UTF-8"
       Encoding(storyInfo$characters) <- "UTF-8"
@@ -131,8 +140,9 @@ shinyServer(function(input, output, session) {
                       "Comments: ", storyInfo$comments, br())
 
       characters <- p(strong("Characters"), br(), storyInfo$characters)
+      relationships <- p(strong("Relationships"), br(), relationshipInfo$relationships)
       fandoms <- p(strong("Fandoms"), br(), storyInfo$fandoms)
-      HTML(paste(title, author, mainInfo, warnings, categories, summary, characters, fandoms, statistics))
+      HTML(paste(title, author, mainInfo, warnings, categories, summary, characters, relationships, fandoms, statistics))
     }
   })
 
