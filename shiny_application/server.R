@@ -1,7 +1,7 @@
 library(shiny)
 library(dplyr)
 library(RPostgreSQL)
-library(plotrix)
+#library(plotrix)
 library(ggplot2)
 library(gridExtra)
 library(DT)
@@ -119,10 +119,19 @@ shinyServer(function(input, output, session) {
                                               " ) AS rl
                                               GROUP BY story")) %>% data.frame()
       Encoding(storyInfo$title) <- "UTF-8"
-      Encoding(storyInfo$summary) <- "UTF-8"
-      Encoding(storyInfo$characters) <- "UTF-8"
-      Encoding(storyInfo$fandoms) <- "UTF-8"
+      if (length(storyInfo$summary) > 0) {
+        Encoding(storyInfo$summary) <- "UTF-8"
+      }
+      if (length(storyInfo$characters) > 0) {
+        Encoding(storyInfo$characters) <- "UTF-8"
+      }
+      if (length(storyInfo$fandoms) > 0) {
+        Encoding(storyInfo$fandoms) <- "UTF-8"
+      }
       Encoding(storyInfo$username) <- "UTF-8"
+      if (length(relationshipInfo$relationships) > 0) {
+        Encoding(relationshipInfo$relationships) <- "UTF-8"
+      }
       title <- h2(storyInfo$title)
       author <- h4("Written by:", storyInfo$username)
       mainInfo <- p(strong("Date published: "), format(storyInfo$date_published, format="%d %B, %Y"), br(),

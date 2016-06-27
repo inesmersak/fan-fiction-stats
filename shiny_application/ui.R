@@ -125,9 +125,39 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
     mainPanel(
       navlistPanel(
         tabPanel("Source and tools",
-          a("Archive of Our Own", href="http://archiveofourown.org/", target="_blank")),
+          fluidRow(
+            column(10, offset=1,
+              h3("Source"),
+              p("Data shown in this application was retrieved from", a("Archive of Our Own", href="http://archiveofourown.org/", target="_blank"), "."),
+              p("Link to our BitBucket repository:",
+                a("Emayla/fan-fiction-stats", href="http://bitbucket.org/Emayla/fan-fiction-stats", target="_blank"), "."),
+              h3("Tools"),
+              p("This application was built in order to help people choose a fan fiction to read. The data was scraped from",
+                a("Archive of Our Own", href="http://archiveofourown.org/", target="_blank"),
+                "using Python's",
+                a("Beautiful Soup", href="https://www.crummy.com/software/BeautifulSoup/bs4/doc/", target="_blank"), "and",
+                a("requests", href="http://docs.python-requests.org/en/master/", target="_blank"), "libraries."),
+              p("All the data collected is stored in a PostgreSQL database, which contains information on stories, authors, characters and relationships, fandoms, etc.",
+                "The database was created and filled using Python's",
+                a("psycopg2", href="https://pypi.python.org/pypi/psycopg2", target="_blank"),
+                "module, which is used to communicate with a PostgreSQL database."),
+              p("The Shiny application is then used to present the data in an intuitive, clean way.",
+                code("RPostgreSQL"), "library is used to retrieve data from the database, while",
+                code("dplyr"), "library is used to manage the data retrieved.",
+                "The graphs are drawn using the", code("ggplot2"), "and", code("gridExtra"), "libraries and the",
+                code("DT"), "library is used to render the stories datatable.")
+            )
+          )
+        ),
         tabPanel("Authors",
-                 "Matic Oskar Hajšen, Ines Meršak.")
+                fluidRow(
+                  column(10, offset=1,
+                     h3("Authors"),
+                     p("This application was made as part of a project for the subject \'Osnove podatkovnih baz\' in the 2015/16 spring term."),
+                     enc2utf8("Matic Oskar Hajšen, Ines Meršak.")
+                  )
+                )
+        )
       )
     )
   )
