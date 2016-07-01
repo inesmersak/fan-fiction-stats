@@ -370,5 +370,19 @@ shinyServer(function(input, output, session) {
       # coord_cartesian(ylim=c(0, (allAppearances-topAppearances)/4)) +
       guides(fill=FALSE)
   })
+  
+  output$timePlot <- renderPlot({
+    timeData <- dbGetQuery(conn, "SELECT date_part('year', date_published) AS year, 
+                                  COUNT(*) AS count_date FROM story 
+                                  WHERE date_part('year', date_published) > 1970
+                                  GROUP BY year 
+                                  ORDER BY year ASC") %>% data.frame()
+    
+    timePlot <- ggplot(data=timeData, aes(x=year, y=count_date, group=1)) +
+      geom_line() +
+      geom_point()
+    timePlot
+      
+  })
 
 })

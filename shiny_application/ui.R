@@ -113,8 +113,10 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
     fluidRow(
       column(8, offset=2,
              plotOutput("catWarnPlot"),
+             plotOutput("timePlot"),
              plotOutput("wordsPlot"))
     )
+
 
     # )
   ),
