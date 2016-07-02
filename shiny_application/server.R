@@ -294,7 +294,8 @@ shinyServer(function(input, output, session) {
     ggplot(data=plotData,
            aes(x=language_name, y=count_language, fill=language_name)) +
       geom_bar(stat="identity") +
-      scale_x_discrete(breaks=NULL)
+      scale_x_discrete(breaks=NULL) +
+      labs(x="Language", y="Number of stories", fill="Languages")
   })
 
 
@@ -305,7 +306,9 @@ shinyServer(function(input, output, session) {
                            GROUP BY rating") %>% data.frame()
     ratingsPlot <- ggplot(plotData, aes(x=factor(1), y = count_rating, fill = rating)) +
       geom_bar(stat = "identity", width = 1) + coord_polar(theta = "y") +
-      ylab("") # + theme(legend.position="bottom")
+      ylab("") +
+      labs(x=" ", y=" ", fill="Ratings")
+    # + theme(legend.position="bottom")
     # ratingsPlot <- ggplot(data=plotData,
     #                       aes(x=factor(1), y=count_rating, fill=rating)) +
     #   geom_bar(stat="identity") +
@@ -320,8 +323,8 @@ shinyServer(function(input, output, session) {
         GROUP BY warning_description") %>% data.frame()
     warningsPlot <- ggplot(plotData, aes(x=warning_description, y = count_warning, fill = warning_description)) +
       geom_bar(stat = "identity")+
-      scale_x_discrete(breaks=NULL) #+
-      #theme(legend.position="bottom")
+      scale_x_discrete(breaks=NULL)+
+      labs(x="Warning", y="Number of stories", fill="Warnings")
 
     plotData <- dbGetQuery(conn,
        "SELECT category_name, COUNT(*) AS count_category FROM story
@@ -332,7 +335,8 @@ shinyServer(function(input, output, session) {
     categoryPlot <- ggplot(data=plotData,
                            aes(x=category_name, y=count_category, fill=category_name)) +
       geom_bar(stat="identity") +
-      guides(fill=FALSE)
+      guides(fill=FALSE) +
+      labs(x="Category", y="Number of stories")
 
     grid.arrange(categoryPlot, warningsPlot, ncol=2)
   })
@@ -345,7 +349,8 @@ shinyServer(function(input, output, session) {
     ggplot(plotData, aes(x = words)) +
       geom_histogram(colour="white", fill="#00BF7D", binwidth=250) +
       scale_x_continuous(breaks=seq(0, wordsMean, 250)) +
-      scale_y_continuous(breaks=seq(0, nrow(storiesData), 1000))
+      scale_y_continuous(breaks=seq(0, nrow(storiesData), 1000)) +
+      labs(x="Number of words", y="Number of stories")
   })
 
   output$charactersPlot <- renderPlot({
@@ -368,7 +373,8 @@ shinyServer(function(input, output, session) {
     ggplot(data=plotData, aes(x=character_name, y=appearances, fill=character_name)) +
       geom_bar(stat="identity") +
       # coord_cartesian(ylim=c(0, (allAppearances-topAppearances)/4)) +
-      guides(fill=FALSE)
+      guides(fill=FALSE) + 
+      labs(x="Character", y="Number of appearances")
   })
   
   output$timePlot <- renderPlot({
@@ -377,12 +383,16 @@ shinyServer(function(input, output, session) {
                                   WHERE date_part('year', date_published) > 1970
                                   GROUP BY year 
                                   ORDER BY year ASC") %>% data.frame()
+    yearMax <- max(timeData$year)
+    countMax <- max(timeData$count_date)
     
     timePlot <- ggplot(data=timeData, aes(x=year, y=count_date, group=1)) +
-      geom_line() +
-      geom_point()
+      geom_line(color="green2", size=1.5) +
+      geom_point(size=2) + 
+      scale_x_continuous(breaks=seq(0, yearMax, 1)) +
+      scale_y_continuous(breaks=seq(0, countMax, 2500)) +
+      labs(x="Year", y="Number of stories published")
     timePlot
-      
   })
 
 })

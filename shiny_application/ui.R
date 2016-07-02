@@ -15,7 +15,7 @@ CATEGORIES <- setNames(seq(1,length(CATEGORIES)), CATEGORIES)
 shinyUI(navbarPage("Harry Potter Fan Fiction",
   theme="bootstrap-sandstone.css",
   inverse = TRUE,
-
+  
   # BROWSE STORIES TAB #
   tabPanel("Browse stories",
     sidebarLayout(
@@ -113,10 +113,9 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
     fluidRow(
       column(8, offset=2,
              plotOutput("catWarnPlot"),
-             plotOutput("timePlot"),
-             plotOutput("wordsPlot"))
+             plotOutput("wordsPlot"),
+             plotOutput("timePlot"))
     )
-
 
     # )
   ),
