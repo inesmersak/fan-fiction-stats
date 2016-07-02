@@ -1,7 +1,6 @@
 library(shiny)
 library(dplyr)
 library(RPostgreSQL)
-#library(plotrix)
 library(ggplot2)
 library(gridExtra)
 library(DT)
@@ -31,7 +30,6 @@ shinyServer(function(input, output, session) {
             JOIN language ON language=language_id
             WHERE"
     query <- paste(query, "hits >=", input$minViews)
-    # AND language_name='Spanish' AND character IN (1,2,7)
     query <- paste0(query, " AND chapters>=", input$chapters[1])
     query <- paste0(query, " AND chapters<=", input$chapters[2])
 
@@ -62,9 +60,7 @@ shinyServer(function(input, output, session) {
 
     t <- dbGetQuery(conn, query) %>% data.frame()
     if (nrow(t) > 0) {
-      # t$summary <- as.character(t$summary)
       Encoding(t$title) <- "UTF-8"
-      # Encoding(t$summary) <- "UTF-8"
     }
     t
   })
@@ -249,6 +245,7 @@ shinyServer(function(input, output, session) {
 
 
   # RENDER STATISTICS
+
   languagesUsed <- dbGetQuery(conn, "SELECT language_name, COUNT(*) AS language_count
                               FROM story LEFT JOIN language ON language=language_id
                               GROUP BY language_name ORDER BY language_count DESC") %>% data.frame()
@@ -308,11 +305,6 @@ shinyServer(function(input, output, session) {
       geom_bar(stat = "identity", width = 1) + coord_polar(theta = "y") +
       ylab("") +
       labs(x=" ", y=" ", fill="Ratings")
-    # + theme(legend.position="bottom")
-    # ratingsPlot <- ggplot(data=plotData,
-    #                       aes(x=factor(1), y=count_rating, fill=rating)) +
-    #   geom_bar(stat="identity") +
-    #   guides(fill=FALSE)
     ratingsPlot
   })
 
@@ -362,33 +354,26 @@ shinyServer(function(input, output, session) {
        ORDER BY appearances DESC
        LIMIT ", numberOfCharactersPlotted)) %>% data.frame()
 
-    # allAppearances = sum(characterAppearances$appearances)
-    # topAppearances = sum(plotData$appearances)
-
-    # plotData[nrow(plotData) + 1,] <- c("Others", allAppearances-topAppearances)
-    # plotData$appearances <- as.numeric(as.character(plotData$appearances))
-    # plotData <- arrange(plotData,appearances)
     plotData <- characterAppearances
 
     ggplot(data=plotData, aes(x=character_name, y=appearances, fill=character_name)) +
       geom_bar(stat="identity") +
-      # coord_cartesian(ylim=c(0, (allAppearances-topAppearances)/4)) +
-      guides(fill=FALSE) + 
+      guides(fill=FALSE) +
       labs(x="Character", y="Number of appearances")
   })
-  
+
   output$timePlot <- renderPlot({
-    timeData <- dbGetQuery(conn, "SELECT date_part('year', date_published) AS year, 
-                                  COUNT(*) AS count_date FROM story 
+    timeData <- dbGetQuery(conn, "SELECT date_part('year', date_published) AS year,
+                                  COUNT(*) AS count_date FROM story
                                   WHERE date_part('year', date_published) > 1970
-                                  GROUP BY year 
+                                  GROUP BY year
                                   ORDER BY year ASC") %>% data.frame()
     yearMax <- max(timeData$year)
     countMax <- max(timeData$count_date)
-    
+
     timePlot <- ggplot(data=timeData, aes(x=year, y=count_date, group=1)) +
       geom_line(color="green2", size=1.5) +
-      geom_point(size=2) + 
+      geom_point(size=2) +
       scale_x_continuous(breaks=seq(0, yearMax, 1)) +
       scale_y_continuous(breaks=seq(0, countMax, 2500)) +
       labs(x="Year", y="Number of stories published")

@@ -15,7 +15,7 @@ CATEGORIES <- setNames(seq(1,length(CATEGORIES)), CATEGORIES)
 shinyUI(navbarPage("Harry Potter Fan Fiction",
   theme="bootstrap-sandstone.css",
   inverse = TRUE,
-  
+
   # BROWSE STORIES TAB #
   tabPanel("Browse stories",
     sidebarLayout(
@@ -27,22 +27,19 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
           choices = RATINGS, selected = 1),
         selectInput("category", label = "Category",
           choices = CATEGORIES, multiple = TRUE),
-        # numericInput("chapters",
-        #   label = "Number of chapters",
-        #   value = 0,
-        #   min = 0
-        # ),
         checkboxInput("completed", label="Completed only", FALSE),
         sliderInput("chapters",
                     "Number of chapters:",
-                    min = 1,
+                    min = 0,
                     max = 500,
-                    value = c(1,1000)),
+                    value = c(0,1000),
+                    step = 100),
         sliderInput("minViews",
                     "Minimal number of views:",
                     min = 0,
                     max = 200000,
-                    value = 1000)
+                    value = 1000,
+                    step = 50000)
       ),
 
       mainPanel(width=10,
@@ -79,12 +76,6 @@ shinyUI(navbarPage("Harry Potter Fan Fiction",
 
   # STATISTICS TAB #
   tabPanel("Statistics",
-    # sidebarLayout(
-    #   sidebarPanel(width=2,
-    #     selectInput("property", label = "Compare by",
-    #                 choices = list("Author" = 1, "Language" = 2, "Number of words" = 3),
-    #                 selected = 1)
-    #   ),
 
     fluidRow(
       column(8, offset=2,
